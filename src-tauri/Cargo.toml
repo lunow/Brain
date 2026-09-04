@@ -1,6 +1,6 @@
 [package]
 name = "brain"
-version = "0.1.0"
+version = "1.0.0"
 description = "A fast, minimalistic markdown reader/editor for macOS"
 authors = ["you"]
 edition = "2021"
