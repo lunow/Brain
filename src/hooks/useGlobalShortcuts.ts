@@ -27,13 +27,23 @@ export function useGlobalShortcuts() {
   const fullscreenActive = useUiStore((s) => s.fullscreenActive);
   const toggleFullscreen = useUiStore((s) => s.toggleFullscreen);
   const exitFullscreen = useUiStore((s) => s.exitFullscreen);
+  const commandPaletteOpen = useUiStore((s) => s.commandPaletteOpen);
   const { createFileMutation, createFolderMutation } = useFileOperations();
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && fullscreenActive) {
-        e.preventDefault();
-        exitFullscreen();
+      if (e.key === "Escape") {
+        // Several other Escape handlers exist across the app (command
+        // palette, table-cell inline editor, table context menu) and none
+        // of them call stopPropagation, so this listener sees the same
+        // keydown they do. Only exit fullscreen if none of those are
+        // currently the intended target of Escape — otherwise dismissing
+        // one of them would also silently kick the user out of fullscreen.
+        const tableCellEditing = (document.activeElement as HTMLElement | null)?.isContentEditable ?? false;
+        const tableContextMenuOpen = !!document.querySelector("[data-table-menu]");
+        if (fullscreenActive && !commandPaletteOpen && !tableCellEditing && !tableContextMenuOpen) {
+          exitFullscreen();
+        }
         return;
       }
       if (!(e.metaKey || e.ctrlKey)) return;
@@ -107,6 +117,7 @@ export function useGlobalShortcuts() {
     fullscreenActive,
     toggleFullscreen,
     exitFullscreen,
+    commandPaletteOpen,
     incrementFontScale,
     decrementFontScale,
     resetFontScale,
