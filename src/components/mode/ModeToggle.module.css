@@ -1,0 +1,23 @@
+.group {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.option {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.option:hover {
+  color: var(--text-primary);
+}
+
+.option[data-active="true"] {
+  background: var(--bg-panel);
+  color: var(--text-primary);
+}

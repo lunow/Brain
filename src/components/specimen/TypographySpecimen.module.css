@@ -1,0 +1,91 @@
+.page {
+  min-height: 100%;
+  background: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.controls {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-hairline);
+  font-family: var(--font-sans);
+  font-size: var(--type-ui-caption);
+  color: var(--text-secondary);
+}
+
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.controls select {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+}
+
+.hint {
+  margin-left: auto;
+  color: var(--text-tertiary);
+}
+
+.content {
+  position: relative;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.stress {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table th,
+.table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-hairline);
+  text-align: left;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: 0;
+}
+
+.debugOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.baselineGrid {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 0, 0, 0.15) 0,
+    rgba(255, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent calc(var(--leading-body) * var(--type-editor-body))
+  );
+}
+
+.content[data-debug] {
+  outline: 1px dashed rgba(255, 0, 0, 0.3);
+}

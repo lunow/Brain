@@ -1,0 +1,121 @@
+/*
+ * Applied typography rules, built on the tokens in tokens/typography.css.
+ * macOS/WKWebView only — OpenType features, text-wrap, lh units and
+ * hanging-punctuation are treated as safe baseline, not progressive
+ * enhancement.
+ */
+
+/* Root rem base: every rem value in the app scales from this, so the
+   app's own font-scale setting (Cmd+Plus/Minus/0) can resize everything
+   proportionally without touching individual component styles. */
+html {
+  font-size: calc(100% * var(--app-font-scale));
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--type-ui-label);
+  line-height: var(--leading-ui);
+  color: var(--text-primary);
+  background: transparent;
+
+  font-synthesis: none;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures contextual;
+  font-feature-settings:
+    "kern" 1,
+    "liga" 1,
+    "calt" 1;
+  font-optical-sizing: auto;
+
+  /* Subpixel rendering left alone in light mode (antialiasing reads thin
+     and washed out there); dark-mode-only smoothing below. Deliberately
+     no text-rendering: optimizeLegibility — costs layout time on long
+     documents for little gain over explicit feature settings above. */
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* --- Prose: the main markdown reading/editing column. --- */
+
+.prose {
+  font-family: var(--font-serif);
+  font-size: var(--type-editor-body);
+  line-height: var(--leading-body);
+  color: var(--text-primary);
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  hanging-punctuation: first last;
+  hyphens: auto;
+  hyphenate-limit-chars: 7 3 3;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose p,
+.prose li,
+.prose blockquote {
+  text-wrap: pretty;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-family: var(--font-serif);
+  font-weight: var(--heading-weight);
+  text-wrap: balance;
+  margin-top: 1.5lh;
+  margin-bottom: 0.35lh;
+}
+
+.prose h1 {
+  font-size: var(--type-editor-h1);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display-1);
+}
+
+.prose h2 {
+  font-size: var(--type-editor-h2);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display-2);
+}
+
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  line-height: var(--leading-tight);
+}
+
+.prose h3 {
+  font-size: var(--type-editor-h3);
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-size: var(--type-editor-h4);
+}
+
+.prose p {
+  margin-bottom: 1lh;
+}
+
+.prose code,
+.prose pre {
+  font-family: var(--font-mono);
+}
+
+.prose a {
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 0.08em;
+  text-decoration-skip-ink: auto;
+}

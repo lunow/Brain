@@ -1,0 +1,399 @@
+.cm-mkFrontmatter {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--text-tertiary);
+}
+
+.cm-mkH1,
+.cm-mkH2,
+.cm-mkH3,
+.cm-mkH4,
+.cm-mkH5,
+.cm-mkH6 {
+  font-weight: var(--heading-weight);
+}
+
+.cm-mkH1 {
+  font-size: var(--type-editor-h1);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display-1);
+}
+.cm-mkH2 {
+  font-size: var(--type-editor-h2);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display-2);
+}
+.cm-mkH3 {
+  font-size: var(--type-editor-h3);
+  line-height: var(--leading-tight);
+}
+.cm-mkH4,
+.cm-mkH5,
+.cm-mkH6 {
+  font-size: var(--type-editor-h4);
+  line-height: var(--leading-tight);
+}
+
+.cm-mkEm {
+  font-style: italic;
+}
+
+.cm-mkStrong {
+  font-weight: 700;
+}
+
+.cm-mkStrike {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
+.cm-mkInlineCode {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-variant-ligatures: none;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  padding: 0 3px;
+  overflow-wrap: break-word;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.cm-mkQuote {
+  color: var(--text-secondary);
+  padding-left: 0.75em;
+  box-shadow: -2px 0 0 var(--border-hairline);
+}
+
+.cm-mkQuoteMark {
+  color: var(--text-tertiary);
+  margin-right: 0.4em;
+}
+
+.cm-mkListMark {
+  color: var(--text-tertiary);
+}
+
+.cm-mkTask {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.cm-mkLink {
+  text-decoration: underline;
+  text-decoration-color: var(--text-tertiary);
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 0.08em;
+  text-decoration-skip-ink: auto;
+  overflow-wrap: break-word;
+  cursor: pointer;
+}
+
+.cm-mkPathLink {
+  text-decoration: underline;
+  text-decoration-color: var(--text-tertiary);
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 0.08em;
+  text-decoration-skip-ink: auto;
+  cursor: pointer;
+}
+
+.cm-mkHr {
+  border: none;
+  border-top: 1px solid var(--border-hairline);
+  margin: 1em 0;
+}
+
+.cm-mkCodeText {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-variant-ligatures: none;
+}
+
+.cm-mkCodeBlockContainer {
+  max-width: 100%;
+  margin: 1em 0;
+}
+
+.cm-mkCodeBlockFallback,
+.cm-mkCodeBlockContainer :is(pre, .shiki) {
+  font-family: var(--font-mono);
+  font-size: var(--type-editor-code);
+  line-height: var(--leading-code);
+  font-variant-ligatures: none;
+  tab-size: 2;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--bg-hover) !important;
+  overflow-x: auto;
+}
+
+/* Shiki dual-theme output: each token carries --shiki-light/--shiki-dark
+   custom properties: https://shiki.style/guide/dual-themes */
+.cm-mkCodeBlockContainer .shiki,
+.cm-mkCodeBlockContainer .shiki span {
+  color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .cm-mkCodeBlockContainer .shiki,
+  .cm-mkCodeBlockContainer .shiki span {
+    color: var(--shiki-dark) !important;
+  }
+}
+
+.cm-mkMermaid {
+  display: flex;
+  justify-content: center;
+  margin: 1em 0;
+  padding: var(--space-4);
+}
+
+.cm-mkMermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.cm-mkTableContainer {
+  /* Breaks out of the prose measure (Narrow/Width/Full) to always span the
+     full editor pane, independent of the width preset — .scrollArea is the
+     inline-size containment context this percentage is relative to. Left
+     edge stays where it naturally sits (aligned with the text, inset by
+     the .widthContainer padding); only the width is extended so the right
+     edge reaches the same inset on the opposite side. */
+  width: calc(100cqw - 2 * var(--page-padding));
+  max-width: none;
+  box-sizing: border-box;
+  margin: 1em 0;
+  overflow-x: auto;
+  /* The breakout can extend past .widthContainer's own box into the silver
+     canvas around it (Narrow/Width) — without its own background the table
+     would pick up the canvas color under that overhang instead of staying
+     a solid white sheet. */
+  background: var(--bg-panel);
+}
+
+.cm-mkTable {
+  /* Columns size to content (not squeezed to fit); min-width still
+     stretches short tables to fill the pane. Wider tables simply overflow
+     .cm-mkTableContainer, which scrolls horizontally rather than wrapping
+     every cell to cram into the available width. */
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.cm-mkTable td[contenteditable="true"],
+.cm-mkTable .cm-mkCellLabel[contenteditable="true"] {
+  outline: 1px solid var(--text-tertiary);
+  outline-offset: -1px;
+  border-radius: var(--radius-sm);
+}
+
+.cm-mkTable th,
+.cm-mkTable td {
+  max-width: 32em;
+}
+
+.cm-mkTable th,
+.cm-mkTable td {
+  padding: 6px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: baseline;
+}
+
+.cm-mkTable thead th {
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--text-tertiary);
+}
+
+.cm-mkTable tbody tr:last-child th,
+.cm-mkTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Row-drag handle (leftmost) and the trailing add-column spacer
+   (rightmost) — the real edge cells now, so this replaces the old
+   :first-child/:last-child zero-padding rule that used to target the
+   actual data columns before these controls existed. */
+.cm-mkRowHandleCell,
+.cm-mkTableAddCell {
+  width: 1%;
+  padding: 0 !important;
+  border-bottom: none !important;
+}
+
+.cm-mkRowGrip,
+.cm-mkColGrip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  opacity: 0;
+  cursor: grab;
+  transition: opacity 0.1s ease;
+  /* This app only runs in Tauri's WKWebView (Safari's engine), which — unlike
+     Chromium — won't reliably start a native HTML5 drag from a plain element
+     (as opposed to an <img> or link) without this. */
+  -webkit-user-drag: element;
+}
+
+.cm-mkTable tr:hover .cm-mkRowGrip,
+.cm-mkTable th:hover .cm-mkColGrip {
+  opacity: 1;
+}
+
+.cm-mkRowGrip:hover,
+.cm-mkColGrip:hover {
+  color: var(--text-secondary);
+}
+
+/* The grip sits inline before the header text — give it a little room so
+   it doesn't crowd the label. */
+.cm-mkTable th {
+  position: relative;
+}
+
+.cm-mkColGrip {
+  float: left;
+  margin: 1px 4px 0 0;
+}
+
+.cm-mkTableAddCell button,
+.cm-mkTableAddRowStrip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.cm-mkTable:hover .cm-mkTableAddCell button {
+  opacity: 1;
+}
+
+.cm-mkTableAddRowStrip {
+  display: flex;
+  padding: 4px 0 4px 4px;
+}
+
+.cm-mkTableAddRowStrip button {
+  opacity: 0.5;
+}
+
+.cm-mkTableContainer:hover .cm-mkTableAddRowStrip button {
+  opacity: 1;
+}
+
+.cm-mkTableAddCell button:hover,
+.cm-mkTableAddRowStrip button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+/* Drop-position indicators: a rule on the leading edge the dragged row/
+   column will land on. */
+.cm-mkDropBefore {
+  box-shadow: inset 0 2px 0 0 var(--text-primary);
+}
+
+.cm-mkDropAfter {
+  box-shadow: inset 0 -2px 0 0 var(--text-primary);
+}
+
+.cm-mkDropBeforeCol {
+  box-shadow: inset 2px 0 0 0 var(--text-primary);
+}
+
+.cm-mkDropAfterCol {
+  box-shadow: inset -2px 0 0 0 var(--text-primary);
+}
+
+.cm-mkTable code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+.cm-mkTableNumeric {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Review-mode inline suggestions. See tokens.css for the --diff- and
+   --hint- variables — a deliberate, narrow exception to the app's
+   monochrome palette. */
+
+.cm-reviewOld {
+  background: var(--diff-old-bg);
+  color: var(--diff-old-text);
+  text-decoration: line-through;
+}
+
+.cm-reviewNew {
+  background: var(--diff-new-bg);
+  color: var(--diff-new-text);
+  border-radius: var(--radius-sm);
+  padding: 0 2px;
+  margin: 0 1px;
+}
+
+.cm-reviewActionsWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.cm-reviewHintAnchor {
+  text-decoration: underline dotted var(--hint-text);
+  text-underline-offset: 2px;
+}
+
+.cm-reviewHintWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+}
+
+.cm-reviewHint {
+  background: var(--hint-bg);
+  color: var(--hint-text);
+  border-radius: var(--radius-sm);
+  padding: 0 3px;
+  font-style: italic;
+}
+
+.cm-reviewBtn {
+  font-size: 0.75em;
+  line-height: 1;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  padding: 1px 4px;
+}
+
+.cm-reviewBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-active);
+}
+
+.cm-reviewAccept:hover {
+  color: var(--diff-new-text);
+}
+
+.cm-reviewReject:hover,
+.cm-reviewDismiss:hover {
+  color: var(--diff-old-text);
+}

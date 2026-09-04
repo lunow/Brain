@@ -1,0 +1,10 @@
+.input {
+  width: 100%;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 1px 4px;
+  outline: none;
+}

@@ -1,0 +1,203 @@
+.wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--panel-header-height);
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.iconButton:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.controls {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.agentGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.agentPill {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.agentPill:hover {
+  color: var(--text-primary);
+}
+
+.agentPill[data-active="true"] {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 52px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 7px var(--space-2);
+  outline: none;
+}
+
+.runButton {
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.runButton:hover:not(:disabled) {
+  background: var(--bg-active);
+}
+
+.runButton:disabled {
+  color: var(--text-tertiary);
+}
+
+.error {
+  font-size: 12px;
+  color: var(--diff-old-text);
+}
+
+.skipped {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  padding: var(--space-4);
+}
+
+.suggestion {
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.suggestion:hover {
+  background: var(--bg-hover);
+}
+
+.suggestionComment {
+  font-size: 12px;
+  color: var(--hint-text);
+  background: var(--hint-bg);
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.suggestionActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.suggestionButton {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.suggestionButton:hover {
+  color: var(--text-primary);
+  background: var(--bg-active);
+}
+
+.feedbackGroup {
+  display: flex;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.feedbackButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.feedbackButton:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.feedbackButton[data-kind="up"][data-active="true"] {
+  color: var(--diff-new-text);
+  background: var(--diff-new-bg);
+}
+
+.feedbackButton[data-kind="down"][data-active="true"] {
+  color: var(--diff-old-text);
+  background: var(--diff-old-bg);
+}

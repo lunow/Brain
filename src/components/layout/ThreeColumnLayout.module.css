@@ -1,0 +1,42 @@
+.layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Reserves space for the macOS inset traffic lights (overlay titlebar) and
+   stays draggable so the window can still be moved from empty space. */
+.titlebarSpacer {
+  flex-shrink: 0;
+  height: 28px;
+}
+
+.row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.column {
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.tree {
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+}
+
+.fileList {
+  flex-shrink: 0;
+  background: var(--bg-app);
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--bg-panel);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

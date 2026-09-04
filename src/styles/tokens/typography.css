@@ -1,0 +1,74 @@
+/*
+ * Type tokens. macOS-only, WKWebView-only: no cross-browser hedging.
+ * System faces only (SF Pro / New York / SF Mono via generic keywords) —
+ * zero network cost, zero layout shift, already ship on every Mac.
+ *
+ * Sizing is rem-based throughout so it responds to the app's own font-scale
+ * setting (Cmd+Plus/Minus, see useGlobalShortcuts) and to a user's OS
+ * accessibility text-size preference — see --app-font-scale below.
+ */
+
+:root {
+  /* One user-adjustable multiplier, applied via html { font-size } in
+     typography.css. Every rem value in the app scales from this. */
+  --app-font-scale: 1;
+
+  /* --- Font stacks. Emoji fallback appended everywhere so emoji in
+     running text never blow out the line box. --- */
+  --font-serif: ui-serif, "New York", Georgia, serif, "Apple Color Emoji";
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif, "Apple Color Emoji";
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace, "Apple Color Emoji";
+
+  /* --- Type scale: roles, not steps. Editor body anchors at 17px (macOS
+     reading size — Books/Mail/Notes use the same). Headings preserve the
+     restrained proportions already validated visually (h1 stays a
+     heading, not a hero) rather than compounding a strict ratio across
+     six full steps, which read too large for a minimalist writing app. --- */
+  --type-editor-body: 1.0625rem; /* 17px */
+  --type-editor-h1: 1.75rem; /* 28px */
+  --type-editor-h2: 1.4375rem; /* 23px */
+  --type-editor-h3: 1.1875rem; /* 19px */
+  --type-editor-h4: 1.0625rem; /* 17px, weight-differentiated from body */
+  --type-editor-h5: 1.0625rem;
+  --type-editor-h6: 1.0625rem;
+  --type-editor-code: 0.9375rem; /* 15px, fenced code blocks */
+
+  --type-ui-label: 0.9375rem; /* 15px — primary UI chrome text */
+  --type-ui-caption: 0.75rem; /* 12px — secondary/muted UI text */
+  --type-ui-micro: 0.6875rem; /* 11px — smallest UI labels */
+
+  /* --- Leading, unitless so it inherits correctly. --- */
+  --leading-display: 1.1; /* h1, h2 */
+  --leading-tight: 1.25; /* h3–h6 */
+  --leading-body: 1.6; /* running prose text */
+  --leading-code: 1.5;
+  --leading-ui: 1.4;
+
+  /* --- Tracking: negative at display sizes, zero at body, positive only
+     on uppercase labels. --- */
+  --tracking-display-1: -0.021em; /* h1 */
+  --tracking-display-2: -0.011em; /* h2 */
+  --tracking-body: 0em;
+  --tracking-label: 0.04em; /* uppercase section labels (FOLDERS, FILES) */
+
+  /* --- Measure. "Width" preset targets the optimum (66–68ch); "Narrow"
+     and "Full" are the app's existing width-preset buttons (an explicit
+     product requirement, distinct from this "wide" concept) — Full stays
+     genuinely uncapped, edge-to-edge, not tied to a 78ch "wide" tier. --- */
+  --measure-narrow: 50ch;
+  --measure: 75ch;
+  --measure-full: none;
+
+  /* Default (light mode): full heading weight. Approximates the spec's
+     "reduce optical weight ~1 notch in dark mode" — system fonts don't
+     expose a controllable variable wght axis via CSS the way a bundled
+     variable font file would, so this steps down standard font-weight
+     values instead of a true variable-axis adjustment. */
+  --heading-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --heading-weight: 500;
+  }
+}

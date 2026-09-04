@@ -1,0 +1,48 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0" stop-color="#6FB5FF"/>
+			<stop offset="1" stop-color="#1866DE"/>
+		</linearGradient>
+		<filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+			<feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#0A3C8C" flood-opacity="0.28"/>
+		</filter>
+	</defs>
+
+	<!-- macOS squircle background -->
+	<rect x="100" y="100" width="824" height="824" rx="186" fill="url(#bg)"/>
+
+	<!-- brain, pure line-art, centered in the squircle -->
+	<g filter="url(#cardShadow)" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+		<!-- outer silhouette -->
+		<path stroke-width="26" d="M 512 272
+			C 462 272 424 298 414 338
+			C 372 330 332 354 322 394
+			C 280 394 250 426 254 464
+			C 220 478 204 516 222 550
+			C 208 584 224 620 258 636
+			C 258 670 286 698 322 698
+			C 330 726 358 744 388 738
+			C 406 762 440 770 468 756
+			C 490 768 534 768 556 756
+			C 584 770 618 762 636 738
+			C 666 744 694 726 702 698
+			C 738 698 766 670 766 636
+			C 800 620 816 584 802 550
+			C 820 516 804 478 770 464
+			C 774 426 744 394 702 394
+			C 692 354 652 330 610 338
+			C 600 298 562 272 512 272 Z"/>
+
+		<!-- central fissure -->
+		<path stroke-width="16" d="M 512 316 C 498 370 522 410 508 462 C 496 514 522 554 508 610 C 500 646 512 680 512 710"/>
+
+		<!-- left hemisphere folds -->
+		<path stroke-width="14" d="M 392 402 C 372 426 372 458 396 478"/>
+		<path stroke-width="14" d="M 350 526 C 336 552 342 580 368 596"/>
+
+		<!-- right hemisphere folds -->
+		<path stroke-width="14" d="M 632 402 C 652 426 652 458 628 478"/>
+		<path stroke-width="14" d="M 674 526 C 688 552 682 580 656 596"/>
+	</g>
+</svg>

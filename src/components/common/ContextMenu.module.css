@@ -1,0 +1,27 @@
+.content {
+  min-width: 180px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.item {
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: default;
+}
+
+.item[data-highlighted] {
+  background: var(--bg-active);
+}
+
+.separator {
+  height: 1px;
+  background: var(--border-hairline);
+  margin: 4px 2px;
+}

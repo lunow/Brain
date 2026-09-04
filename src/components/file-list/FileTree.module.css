@@ -1,0 +1,28 @@
+.folderRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-right: var(--space-3);
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: default;
+}
+
+.folderRow:hover {
+  background: var(--bg-hover);
+}
+
+.folderIcon {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.folderName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

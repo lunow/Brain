@@ -1,0 +1,81 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--panel-header-height);
+  box-sizing: border-box;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.addButton {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.addButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.empty {
+  padding: var(--space-3);
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.list {
+  padding-bottom: var(--space-2);
+}
+
+.subheader {
+  padding: var(--space-2) var(--space-3) 2px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rootItem {
+  position: relative;
+}
+
+.rootItem:hover .removeButton {
+  opacity: 1;
+}
+
+.removeButton {
+  position: absolute;
+  right: 6px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.removeButton:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}

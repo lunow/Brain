@@ -1,0 +1,17 @@
+.resizer {
+  flex-shrink: 0;
+  box-sizing: content-box;
+  width: 1px;
+  padding: 0 4px;
+  margin: 0 -4px;
+  background-color: var(--border-hairline);
+  background-clip: content-box;
+  cursor: col-resize;
+  position: relative;
+  z-index: 1;
+}
+
+.resizer:hover,
+.resizer:active {
+  background-color: var(--text-tertiary);
+}

@@ -1,0 +1,119 @@
+.wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.editorPane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Canvas around the white page — visible wherever the Narrow/Width
+     measure leaves the page narrower than the pane (Full has no cap, so
+     the page fills the pane and no canvas shows). */
+  background: var(--bg-app);
+}
+
+.sidebarPane {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-sidebar);
+}
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  /* Lets table widgets break out to the full pane width (100cqw in
+     editor.css's .cm-mkTableContainer) regardless of the Narrow/Width/Full
+     measure applied to surrounding prose. */
+  container-type: inline-size;
+}
+
+.widthContainer {
+  margin: 0;
+  padding: var(--page-padding);
+  background: var(--bg-panel);
+  /* Always reads as a full sheet of paper — short documents shouldn't
+     leave the silver canvas showing below a stub of white. Left in the
+     default content-box model (so max-width keeps meaning the prose
+     measure, not measure-plus-padding, matching the cm-mkTableContainer
+     breakout math above), so the padding is subtracted back out here to
+     land the border-box, not just the content box, at 100% of
+     .scrollArea. */
+  min-height: calc(100% - 2 * var(--page-padding));
+  transition: max-width 0.15s ease;
+}
+
+.widthContainer[data-width="narrow"] {
+  max-width: var(--measure-narrow);
+}
+
+.widthContainer[data-width="normal"] {
+  max-width: var(--measure);
+}
+
+.widthContainer[data-width="full"] {
+  max-width: var(--measure-full);
+}
+
+/* Fullscreen (distraction-free) view: Narrow/Width no longer sit flush-left
+   against the canvas — centered, with breathing room on all sides, reads
+   better once the side columns (and the toolbar) are gone and there's no
+   neighboring UI to align against. Full has no max-width cap, so this
+   would be a no-op anyway. min-height is reduced by the same amount the
+   margin adds, so a short document still lands at exactly 100% of
+   .scrollArea (margin + box) instead of forcing extra scroll space. */
+.widthContainer[data-centered="true"] {
+  margin: var(--fullscreen-margin) auto;
+  min-height: calc(100% - 2 * var(--page-padding) - 2 * var(--fullscreen-margin));
+}
+
+.loading {
+  padding: var(--space-6);
+  color: var(--text-tertiary);
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.conflictBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.conflictBanner button {
+  font-size: 12px;
+  color: var(--text-primary);
+  padding: 2px 8px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.conflictBanner button:hover {
+  background: var(--bg-active);
+}

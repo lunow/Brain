@@ -1,0 +1,62 @@
+.row {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  padding: 6px 8px;
+  gap: 6px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  cursor: default;
+}
+
+.row:hover {
+  background: var(--bg-hover);
+}
+
+.rowSelected {
+  background: var(--bg-active);
+}
+
+.rowDropTarget {
+  outline: 1px solid var(--text-tertiary);
+  outline-offset: -1px;
+  background: var(--bg-hover);
+}
+
+.folderIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--text-tertiary);
+}
+
+.labelColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.stats {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}

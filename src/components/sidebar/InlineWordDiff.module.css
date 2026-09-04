@@ -1,0 +1,22 @@
+.diff {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.removed {
+  color: var(--diff-old-text);
+  background: var(--diff-old-bg);
+  text-decoration: line-through;
+  border-radius: 2px;
+}
+
+.added {
+  color: var(--diff-new-text);
+  background: var(--diff-new-bg);
+  text-decoration: none;
+  border-radius: 2px;
+}
