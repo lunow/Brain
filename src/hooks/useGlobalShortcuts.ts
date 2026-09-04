@@ -8,9 +8,9 @@ import { useFileOperations } from "./useFileOperations";
  * Cmd+W (close file), Cmd+1/2/3 (writing mode: Ideate/Write/Review),
  * Cmd+Shift+1/2/3 (width presets), Cmd+D/Shift+Cmd+D (toggle Workspaces/
  * Content columns), Cmd+J (toggle right sidebar), Shift+Cmd+F (toggle fullscreen),
- * Cmd+Plus/Minus/0 (app font scale — deliberately NOT the WKWebView's own
- * pinch/Cmd-zoom, which would zoom UI chrome and prose together at a fixed
- * native step; this scales the app's own rem tokens).
+ * Escape (exit fullscreen), Cmd+Plus/Minus/0 (app font scale — deliberately NOT
+ * the WKWebView's own pinch/Cmd-zoom, which would zoom UI chrome and prose
+ * together at a fixed native step; this scales the app's own rem tokens).
  */
 export function useGlobalShortcuts() {
   const selectedFolderPath = useWorkspaceStore((s) => s.selectedFolderPath);
@@ -24,11 +24,18 @@ export function useGlobalShortcuts() {
   const toggleTreeVisible = useUiStore((s) => s.toggleTreeVisible);
   const toggleFileListVisible = useUiStore((s) => s.toggleFileListVisible);
   const toggleRightSidebarVisible = useUiStore((s) => s.toggleRightSidebarVisible);
+  const fullscreenActive = useUiStore((s) => s.fullscreenActive);
   const toggleFullscreen = useUiStore((s) => s.toggleFullscreen);
+  const exitFullscreen = useUiStore((s) => s.exitFullscreen);
   const { createFileMutation, createFolderMutation } = useFileOperations();
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && fullscreenActive) {
+        e.preventDefault();
+        exitFullscreen();
+        return;
+      }
       if (!(e.metaKey || e.ctrlKey)) return;
       const key = e.key.toLowerCase();
 
@@ -97,7 +104,9 @@ export function useGlobalShortcuts() {
     toggleTreeVisible,
     toggleFileListVisible,
     toggleRightSidebarVisible,
+    fullscreenActive,
     toggleFullscreen,
+    exitFullscreen,
     incrementFontScale,
     decrementFontScale,
     resetFontScale,

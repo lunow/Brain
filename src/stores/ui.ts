@@ -134,6 +134,7 @@ interface UiState {
    *  Not persisted — always starts back off, like writingMode. */
   fullscreenActive: boolean;
   toggleFullscreen: () => void;
+  exitFullscreen: () => void;
 }
 
 const initialPanelWidths = loadPanelWidths();
@@ -205,6 +206,7 @@ export const useUiStore = create<UiState>((set, get) => ({
 
   fullscreenActive: false,
   toggleFullscreen: () => set((state) => ({ fullscreenActive: !state.fullscreenActive })),
+  exitFullscreen: () => set({ fullscreenActive: false }),
 }));
 
 function roundScale(n: number): number {
