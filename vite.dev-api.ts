@@ -202,6 +202,12 @@ async function handleCommand(cmd: string, args: Record<string, unknown>): Promis
     case "plugin:path|resolve_directory": {
       return os.homedir();
     }
+    // `brain <folder>` CLI launches only exist as real OS processes — no
+    // dev-browser equivalent, so just report "nothing pending" rather than
+    // emulating the single-instance plugin here.
+    case "get_launch_folder": {
+      return null;
+    }
     case "list_dir_children": {
       const dirPath = args.path as string;
       const dirents = await fs.readdir(dirPath, { withFileTypes: true });

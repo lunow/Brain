@@ -22,6 +22,7 @@
 
   --bg-app: var(--gray-50);
   --bg-sidebar: transparent; /* sits on native vibrancy material */
+  --bg-titlebar: var(--gray-100); /* silver bar separating the native title area from the app's own header row */
   --bg-panel: var(--gray-0);
   --bg-hover: var(--gray-150);
   --bg-active: var(--gray-200);

@@ -155,14 +155,18 @@
 }
 
 .cm-mkTableContainer {
-  /* Breaks out of the prose measure (Narrow/Width/Full) to always span the
+  /* Shrinks to the table's own content width (matching .cm-mkTable below) —
+     the background shouldn't paint wider than the table sitting inside it.
+     max-width breaks out of the prose measure (Narrow/Width/Full) up to the
      full editor pane, independent of the width preset — .scrollArea is the
-     inline-size containment context this percentage is relative to. Left
-     edge stays where it naturally sits (aligned with the text, inset by
-     the .widthContainer padding); only the width is extended so the right
-     edge reaches the same inset on the opposite side. */
-  width: calc(100cqw - 2 * var(--page-padding));
-  max-width: none;
+     inline-size containment context this percentage is relative to — so a
+     genuinely wide table still gets the full pane to lay out in before
+     .cm-mkTable's own overflow kicks in and this scrolls horizontally.
+     Left edge stays where it naturally sits, aligned with the text (inset
+     by .widthContainer's padding); only the available width toward the
+     right is extended. */
+  width: max-content;
+  max-width: calc(100cqw - 2 * var(--page-padding));
   box-sizing: border-box;
   margin: 1em 0;
   overflow-x: auto;
@@ -174,23 +178,22 @@
 }
 
 .cm-mkTable {
-  /* Columns size to content (not squeezed to fit); min-width still
-     stretches short tables to fill the pane. Wider tables simply overflow
-     .cm-mkTableContainer, which scrolls horizontally rather than wrapping
-     every cell to cram into the available width. */
+  /* Columns size to content (not squeezed to fit, and not stretched to fill
+     the pane either — a short table just sits at its natural width). Wider
+     tables simply overflow .cm-mkTableContainer, which scrolls horizontally
+     rather than wrapping every cell to cram into the available width. */
   width: max-content;
-  min-width: 100%;
   border-collapse: collapse;
   font-family: var(--font-sans);
   font-size: 0.85em;
   line-height: 1.5;
 }
 
+/* Suppresses the browser's native focus ring on the contentEditable cell —
+   without this, WebKit draws its own blue glow outline in its place. */
 .cm-mkTable td[contenteditable="true"],
 .cm-mkTable .cm-mkCellLabel[contenteditable="true"] {
-  outline: 1px solid var(--text-tertiary);
-  outline-offset: -1px;
-  border-radius: var(--radius-sm);
+  outline: none;
 }
 
 .cm-mkTable th,

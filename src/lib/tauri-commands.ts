@@ -137,3 +137,11 @@ export function getSettings(): Promise<AppSettings> {
 export function setSettings(settings: AppSettings): Promise<void> {
   return invoke("set_settings", { settings });
 }
+
+/** The folder passed on the command line at first launch (`brain <folder>`),
+ *  if any — consumed once. A second `brain <folder>` while the app is
+ *  already running arrives instead as a live "cli://open-folder" event,
+ *  handled by useCliOpenFolder. */
+export function getLaunchFolder(): Promise<string | null> {
+  return invoke("get_launch_folder");
+}

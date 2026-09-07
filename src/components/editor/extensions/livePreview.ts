@@ -212,13 +212,16 @@ function buildDecorations(state: EditorState): DecorationSet {
       }
 
       if (type === "HorizontalRule") {
-        if (!isLineRangeActive(state, node.from, node.to)) {
-          pending.push({
-            from: node.from,
-            to: node.to,
-            deco: Decoration.replace({ widget: new HrWidget(), block: false }),
-          });
-        }
+        // Unlike fenced code/tables, there's no raw source worth exposing here
+        // (it's always exactly "---"/"***"/"___") — so unlike those, this isn't
+        // gated on isLineRangeActive. The widget's margin makes it much taller
+        // than a plain text line, so swapping it in/out as the cursor crosses
+        // the line would jump the layout underneath the selection.
+        pending.push({
+          from: node.from,
+          to: node.to,
+          deco: Decoration.replace({ widget: new HrWidget(), block: false }),
+        });
         return;
       }
     },
@@ -253,7 +256,14 @@ export const livePreviewField = StateField.define<DecorationSet>({
     return buildDecorations(state);
   },
   update(decorations, tr) {
-    if (tr.docChanged || selectionChanged(tr)) {
+    // Lezer parses large documents incrementally across idle-callback
+    // chunks rather than all at once on mount — @codemirror/language
+    // dispatches an empty transaction each time background parsing makes
+    // further progress (see its parseWorker), specifically so consumers
+    // like this get a chance to rebuild. Without this check, headings/bold
+    // past whatever synchronously parsed on load stay as raw "##"/"**"
+    // until an unrelated doc or selection change happens to trigger one.
+    if (tr.docChanged || selectionChanged(tr) || syntaxTree(tr.state) !== syntaxTree(tr.startState)) {
       return buildDecorations(tr.state);
     }
     return decorations.map(tr.changes);

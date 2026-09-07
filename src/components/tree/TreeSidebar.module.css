@@ -1,11 +1,29 @@
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: var(--panel-header-height);
+  flex-shrink: 0;
   box-sizing: border-box;
   padding: 0 var(--space-2) 0 var(--space-3);
   border-bottom: 1px solid var(--border-hairline);
+  /* Opaque even though .tree (ThreeColumnLayout.module.css) is transparent
+     (sits on native vibrancy) — the header itself stays a solid readable
+     strip regardless of what's behind the sidebar. */
+  background: var(--bg-app);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: none;
 }
 
 .title {

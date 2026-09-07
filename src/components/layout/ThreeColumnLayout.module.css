@@ -8,7 +8,15 @@
    stays draggable so the window can still be moved from empty space. */
 .titlebarSpacer {
   flex-shrink: 0;
-  height: 28px;
+  /* A bit taller than the traffic lights strictly need, so the native
+     window title (set by useWindowTitle) has breathing room above/below
+     and reads as properly centered in the bar rather than cramped. */
+  height: 34px;
+  /* Silver bar under the native title area (traffic lights + the window
+     title set by useWindowTitle), separating it from the app's own header
+     row (Workspaces/Content) below via the hairline border. */
+  background: var(--bg-titlebar);
+  border-bottom: 1px solid var(--border-hairline);
 }
 
 .row {
@@ -19,7 +27,9 @@
 
 .column {
   min-width: 0;
-  overflow-y: auto;
+  /* No overflow/scroll of its own — TreeSidebar/FileList each split into a
+     fixed header + their own scrollable content wrapper below it, so the
+     scrollbar tracks only that content and doesn't run behind the header. */
 }
 
 .tree {

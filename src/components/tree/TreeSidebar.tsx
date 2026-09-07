@@ -60,7 +60,7 @@ export function TreeSidebar() {
   }, []);
 
   return (
-    <div>
+    <div className={styles.panel}>
       <div className={styles.header}>
         <span className={styles.title}>Workspaces</span>
         <button
@@ -74,28 +74,30 @@ export function TreeSidebar() {
         </button>
       </div>
 
-      {roots?.length === 0 && <div className={styles.empty}>No folders added yet.</div>}
+      <div className={styles.content}>
+        {roots?.length === 0 && <div className={styles.empty}>No folders added yet.</div>}
 
-      <div className={styles.list}>
-        {groups.map(([parent, items]) => (
-          <div key={parent}>
-            {items.length > 2 && <div className={styles.subheader}>{displayPath(parent, home)}</div>}
-            {items.map((root) => (
-              <div key={root.id} className={styles.rootItem}>
-                <WorkspaceRootItem root={root} homeDir={home} onRemoveRoot={() => removeRoot.mutate(root.id)} />
-                <button
-                  type="button"
-                  className={styles.removeButton}
-                  onClick={() => removeRoot.mutate(root.id)}
-                  aria-label={`Remove ${root.displayName}`}
-                  title="Remove from sidebar"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        ))}
+        <div className={styles.list}>
+          {groups.map(([parent, items]) => (
+            <div key={parent}>
+              {items.length > 2 && <div className={styles.subheader}>{displayPath(parent, home)}</div>}
+              {items.map((root) => (
+                <div key={root.id} className={styles.rootItem}>
+                  <WorkspaceRootItem root={root} homeDir={home} onRemoveRoot={() => removeRoot.mutate(root.id)} />
+                  <button
+                    type="button"
+                    className={styles.removeButton}
+                    onClick={() => removeRoot.mutate(root.id)}
+                    aria-label={`Remove ${root.displayName}`}
+                    title="Remove from sidebar"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

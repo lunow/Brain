@@ -38,6 +38,7 @@
 
 .list {
   overflow-y: auto;
+  overscroll-behavior: none;
   padding: var(--space-1);
 }
 

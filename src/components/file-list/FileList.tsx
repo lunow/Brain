@@ -87,7 +87,7 @@ export function FileList() {
   const sortedFiles = useMemo(() => (files ? [...files].sort((a, b) => a.path.localeCompare(b.path)) : files), [files]);
 
   return (
-    <div>
+    <div className={styles.panel}>
       <div className={styles.header}>
         <span className={styles.title}>Content</span>
         <div className={styles.headerActions}>
@@ -117,18 +117,20 @@ export function FileList() {
         </div>
       </div>
 
-      {!selectedFolderPath && <div className={styles.empty}>Select a folder to see its files.</div>}
-      {selectedFolderPath && isLoading && <div className={styles.empty}>Loading…</div>}
-      {selectedFolderPath && !isLoading && files?.length === 0 && (
-        <div className={styles.empty}>No markdown files here.</div>
-      )}
-
-      <div>
-        {selectedFolderPath && includeSubfolders && files && files.length > 0 ? (
-          <FileTree rootPath={selectedFolderPath} />
-        ) : (
-          sortedFiles?.map((file) => <FileRow key={file.path} file={file} />)
+      <div className={styles.content}>
+        {!selectedFolderPath && <div className={styles.empty}>Select a folder to see its files.</div>}
+        {selectedFolderPath && isLoading && <div className={styles.empty}>Loading…</div>}
+        {selectedFolderPath && !isLoading && files?.length === 0 && (
+          <div className={styles.empty}>No markdown files here.</div>
         )}
+
+        <div>
+          {selectedFolderPath && includeSubfolders && files && files.length > 0 ? (
+            <FileTree rootPath={selectedFolderPath} />
+          ) : (
+            sortedFiles?.map((file) => <FileRow key={file.path} file={file} />)
+          )}
+        </div>
       </div>
     </div>
   );

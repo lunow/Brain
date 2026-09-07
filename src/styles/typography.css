@@ -17,7 +17,11 @@ body {
   font-size: var(--type-ui-label);
   line-height: var(--leading-ui);
   color: var(--text-primary);
-  background: transparent;
+  /* Opaque fallback so the window is never blank/see-through to the native
+     vibrancy material while React (re-)mounts — e.g. after WebKit discards
+     backgrounded web content and repaints from scratch. The sidebar column
+     and titlebar spacer re-punch transparency on top of this deliberately. */
+  background: var(--bg-app);
 
   font-synthesis: none;
   font-kerning: normal;

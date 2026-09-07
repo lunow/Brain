@@ -7,7 +7,6 @@
   text-align: left;
   font-size: 13px;
   color: var(--text-primary);
-  border-radius: var(--radius-sm);
   cursor: default;
 }
 
@@ -17,6 +16,8 @@
 
 .rowSelected {
   background: var(--bg-active);
+  border-top: 1px solid var(--border-hairline);
+  border-bottom: 1px solid var(--border-hairline);
 }
 
 .rowDropTarget {

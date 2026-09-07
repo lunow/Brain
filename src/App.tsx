@@ -9,6 +9,8 @@ import { useFileOperations } from "@/hooks/useFileOperations";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { useFsWatcher } from "@/hooks/useFsWatcher";
 import { useApplyFontScale } from "@/hooks/useApplyFontScale";
+import { useCliOpenFolder } from "@/hooks/useCliOpenFolder";
+import { useWindowTitle } from "@/hooks/useWindowTitle";
 import { useSettingsStore } from "@/stores/settings";
 import { useEffect } from "react";
 
@@ -16,6 +18,8 @@ function App() {
   useGlobalShortcuts();
   useFsWatcher();
   useApplyFontScale();
+  useCliOpenFolder();
+  useWindowTitle();
   const { moveMutation } = useFileOperations();
   const hydrateSettings = useSettingsStore((s) => s.hydrate);
 

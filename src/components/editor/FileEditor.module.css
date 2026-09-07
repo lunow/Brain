@@ -33,6 +33,11 @@
 .scrollArea {
   flex: 1;
   overflow-y: auto;
+  /* Keeps the rubber-band bounce local to this element instead of chaining
+     to the page — without this, WebKit's elastic overscroll moves the
+     entire window surface (including the titlebar bar and the other
+     columns) rather than just this scroll area. */
+  overscroll-behavior: contain;
   /* Lets table widgets break out to the full pane width (100cqw in
      editor.css's .cm-mkTableContainer) regardless of the Narrow/Width/Full
      measure applied to surrounding prose. */

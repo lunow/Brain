@@ -9,6 +9,22 @@ interface ParsedTable {
   rows: string[][];
 }
 
+/** Nearest scrollable ancestor — the actual scroll container is FileEditor's
+ *  `.scrollArea`, not CM's own `.cm-scroller` (which has `overflow: visible`
+ *  here; see typewriterScroll.ts). Walked generically rather than matched by
+ *  class name since that class is a hashed CSS-module identifier. */
+function findScrollParent(el: HTMLElement): HTMLElement | null {
+  let node = el.parentElement;
+  while (node) {
+    const style = getComputedStyle(node);
+    if ((style.overflowY === "auto" || style.overflowY === "scroll") && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return null;
+}
+
 /** Splits a `| a | b |` row on unescaped pipes, trimming the outer pair. */
 function splitRow(line: string): string[] {
   let trimmed = line.trim();
@@ -363,7 +379,25 @@ export class TableWidget extends WidgetType {
     const commit = () => {
       const newSource = serializeTable(parsed);
       if (newSource === this.source) return;
-      view.dispatch({ changes: { from: this.from, to: this.to, insert: newSource } });
+      // Committing rewrites the whole table's source, which fails this
+      // widget's eq() (source changed) and rebuilds it from scratch — a
+      // wholesale DOM replacement, not an in-place patch. When that changes
+      // the table's rendered height even slightly (e.g. a cell's edited
+      // text wraps differently), the scroll container has no compensation
+      // for a reflow above the viewport (`.scrollArea` is a plain
+      // browser-scrolled div — CM's own scroll-anchoring lives on
+      // `.cm-scroller`, which is non-scrolling here), so the view visibly
+      // shifts. Pin the scroll position across the dispatch to cancel that.
+      const scrollParent = findScrollParent(view.dom);
+      const scrollTop = scrollParent?.scrollTop;
+      // Tagged so MarkdownEditor's typewriter-scroll effect can ignore it: cell
+      // editing happens in a plain contentEditable DOM node outside CM's own
+      // selection, so state.selection.main.head here is stale (wherever the
+      // cursor was left before the table was ever touched, often doc start) —
+      // pinning the viewport to it on commit would jump the scroll position
+      // to that unrelated spot instead of leaving the table in view.
+      view.dispatch({ changes: { from: this.from, to: this.to, insert: newSource }, userEvent: "input.table" });
+      if (scrollParent && scrollTop !== undefined) scrollParent.scrollTop = scrollTop;
     };
 
     const table = document.createElement("table");
