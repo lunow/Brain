@@ -9,7 +9,7 @@ and thinking environment, with AI woven in where it actually helps instead of ev
 It's highly opinionated by [Paul](https://paul-lunow.de) — built around one workflow: **Ideate →
 Write → Review**, on top of your own files, in your own workspaces.
 
-**[⬇ Download Brain v2.0.0 for macOS (Apple Silicon + Intel)](https://github.com/lunow/Brain/releases/download/v2.0.0/Brain_2.0.0_universal.dmg)**
+**[⬇ Download Brain v2 for macOS (Apple Silicon + Intel)](https://github.com/lunow/Brain/releases/download/v2/Brain_2.0.0_universal.dmg)**
 
 Signed and notarized by Apple — open the DMG, drag Brain into Applications, done.
 
