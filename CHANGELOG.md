@@ -5,6 +5,25 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 3
+
+**Editor**
+
+- Reworked typewriter scrolling so it only kicks in while you're typing
+  across multiple rows. Clicking around, fixing a word here and there,
+  marking text, arrow-key navigation, paste, and undo/redo no longer move
+  the page.
+- The active line now stays wherever it is on screen when you start
+  typing, instead of being pulled to a fixed 60% mark — scroll the line to
+  where you want it, and it stays there as new rows come in.
+- Scrolling the page yourself while typing always wins: the next keystroke
+  simply picks up the cursor's new position.
+
+**Export**
+
+- New "Copy to clipboard" option in the export menu and the Cmd+K palette
+  (Export section) — puts the file's markdown source on the clipboard.
+
 ## Version 2
 
 **CLI**
