@@ -27,3 +27,6 @@ dist-ssr
 *.tsbuildinfo
 .enola
 .claude
+
+# Local test content
+/test-vault
