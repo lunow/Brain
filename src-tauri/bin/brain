@@ -1,0 +1,29 @@
+#!/bin/bash
+# `brain` command-line launcher, shipped inside Brain.app at
+# Contents/Resources/bin/brain. Install once with
+#
+#   ln -s /Applications/Brain.app/Contents/Resources/bin/brain /usr/local/bin/brain
+#
+# `brain <folder>` adds (or switches to) that folder as a workspace; `brain`
+# alone just opens the app. If Brain is already running, the new process
+# hands the folder over via the single-instance plugin and exits.
+
+# Resolve symlinks so the script finds its own bundle when linked into PATH.
+src="${BASH_SOURCE[0]}"
+while [ -L "$src" ]; do
+  dir="$(cd -P "$(dirname "$src")" && pwd)"
+  src="$(readlink "$src")"
+  [[ "$src" != /* ]] && src="$dir/$src"
+done
+here="$(cd -P "$(dirname "$src")" && pwd)"
+bin="$here/../../MacOS/brain"
+
+if [ ! -x "$bin" ]; then
+  echo "brain: Brain.app not found next to this launcher ($bin)" >&2
+  exit 1
+fi
+
+# Detach so the shell prompt returns immediately and closing the terminal
+# doesn't quit the app. The child inherits cwd, which the app uses to
+# resolve a relative folder argument.
+nohup "$bin" "$@" >/dev/null 2>&1 &

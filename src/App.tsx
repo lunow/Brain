@@ -12,6 +12,7 @@ import { useApplyFontScale } from "@/hooks/useApplyFontScale";
 import { useCliOpenFolder } from "@/hooks/useCliOpenFolder";
 import { useWindowTitle } from "@/hooks/useWindowTitle";
 import { useSettingsStore } from "@/stores/settings";
+import { useWorkspaceStore } from "@/stores/workspace";
 import { useEffect } from "react";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
   useWindowTitle();
   const { moveMutation } = useFileOperations();
   const hydrateSettings = useSettingsStore((s) => s.hydrate);
+  const expandFileTreePath = useWorkspaceStore((s) => s.expandFileTreePath);
 
   useEffect(() => {
     hydrateSettings();
@@ -37,9 +39,12 @@ function App() {
     if (!over) return;
     const activeData = active.data.current as { kind: string; path: string } | undefined;
     const overData = over.data.current as { kind: string; path: string } | undefined;
-    if (activeData?.kind === "file" && overData?.kind === "folder") {
-      moveMutation.mutate({ srcPath: activeData.path, destDir: overData.path });
-    }
+    if (activeData?.kind !== "file" || overData?.kind !== "folder") return;
+    // Dropping a file back onto the folder it already lives in is a no-op.
+    if (activeData.path.slice(0, activeData.path.lastIndexOf("/")) === overData.path) return;
+    moveMutation.mutate({ srcPath: activeData.path, destDir: overData.path });
+    // Reveal the moved file if it landed in a collapsed Content-tree folder.
+    expandFileTreePath(overData.path);
   }
 
   return (

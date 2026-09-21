@@ -9,6 +9,7 @@ function ctx(overrides: Partial<CommandContext> = {}): CommandContext {
     createFile: () => {},
     createFolder: () => {},
     addRoot: () => {},
+    renameFile: () => {},
     setWritingMode: () => {},
     toggleTreeVisible: () => {},
     toggleFileListVisible: () => {},
@@ -72,6 +73,24 @@ describe("buildResultGroups", () => {
       fileListVisible: true,
     });
     expect(groups.find((g) => g.label === "Export")).toBeUndefined();
+  });
+
+  it("hides rename-file when no file is selected, shows it otherwise", () => {
+    const params = {
+      query: "",
+      commands: buildCommands(ctx()),
+      navIndex: undefined,
+      selectedFolderPath: "/root",
+      writingMode: "write" as const,
+      treeVisible: true,
+      fileListVisible: true,
+    };
+    const idsFor = (selectedFilePath: string | null) =>
+      buildResultGroups({ ...params, selectedFilePath })
+        .find((g) => g.label === "Create")
+        ?.items.map((i) => (i.type === "command" ? i.id : i));
+    expect(idsFor(null)).not.toContain("rename-file");
+    expect(idsFor("/root/a.md")).toContain("rename-file");
   });
 
   it("hides toggle-sidebar in write mode", () => {

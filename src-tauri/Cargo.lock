@@ -288,7 +288,7 @@ dependencies = [
 
 [[package]]
 name = "brain"
-version = "3.0.0"
+version = "4.0.0"
 dependencies = [
  "notify",
  "notify-debouncer-full",

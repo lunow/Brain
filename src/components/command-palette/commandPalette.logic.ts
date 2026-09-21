@@ -76,6 +76,8 @@ export interface CommandContext {
   /** Already bound to the current selected folder (a no-op if none). */
   createFolder: () => void;
   addRoot: () => void;
+  /** Already bound to the current selected file (a no-op if none). */
+  renameFile: () => void;
   setWritingMode: (mode: WritingMode) => void;
   toggleTreeVisible: () => void;
   toggleFileListVisible: () => void;
@@ -96,6 +98,7 @@ export function buildCommands(ctx: CommandContext): CommandResult[] {
     { type: "command", id: "new-file", section: "Create", label: "New File", hint: "⌘N", run: ctx.createFile },
     { type: "command", id: "new-folder", section: "Create", label: "New Folder", hint: "⇧⌘N", run: ctx.createFolder },
     { type: "command", id: "add-root", section: "Create", label: "Add Folder to Workspace…", hint: "⌘O", run: ctx.addRoot },
+    { type: "command", id: "rename-file", section: "Create", label: "Rename File", hint: "⇧⌘R", run: ctx.renameFile },
     { type: "command", id: "mode-ideate", section: "Mode", label: "Ideate Mode", hint: "⌘1", run: () => ctx.setWritingMode("ideate") },
     { type: "command", id: "mode-write", section: "Mode", label: "Write Mode", hint: "⌘2", run: () => ctx.setWritingMode("write") },
     { type: "command", id: "mode-review", section: "Mode", label: "Review Mode", hint: "⌘3", run: () => ctx.setWritingMode("review") },
@@ -151,7 +154,7 @@ function commandSectionGroups(params: BuildResultGroupsParams, trimmed: string):
     const items = commands
       .filter((c) => c.section === section)
       .filter((c) => !((c.id === "new-file" || c.id === "new-folder") && !selectedFolderPath))
-      .filter((c) => !(c.section === "Export" && !selectedFilePath))
+      .filter((c) => !((c.section === "Export" || c.id === "rename-file") && !selectedFilePath))
       .filter((c) => !(c.id === "toggle-sidebar" && writingMode === "write"))
       .map((c) => ({ c, score: scoreLabel(trimmed, c.label) }))
       .filter((x): x is { c: CommandResult; score: number } => x.score !== null)

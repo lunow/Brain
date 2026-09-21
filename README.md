@@ -9,9 +9,19 @@ and thinking environment, with AI woven in where it actually helps instead of ev
 It's highly opinionated by [Paul](https://paul-lunow.de) — built around one workflow: **Ideate →
 Write → Review**, on top of your own files, in your own workspaces.
 
-**[⬇ Download Brain v3 for macOS (Apple Silicon + Intel)](https://github.com/lunow/Brain/releases/download/v3/Brain_3.0.0_universal.dmg)**
+**[⬇ Download Brain v4 for macOS (Apple Silicon + Intel)](https://github.com/lunow/Brain/releases/download/v4/Brain_4.0.0_universal.dmg)**
 
 Signed and notarized by Apple — open the DMG, drag Brain into Applications, done.
+
+**Command line.** Brain ships a `brain` launcher inside the app bundle. Link it into your
+`PATH` once:
+
+```bash
+ln -s /Applications/Brain.app/Contents/Resources/bin/brain /usr/local/bin/brain
+```
+
+Then `brain ~/notes` opens (or switches to) that folder as a workspace, and `brain` alone just
+opens the app. If Brain is already running, the folder is handed to the running instance.
 
 ## Functionality
 
@@ -46,6 +56,7 @@ and switch between them instantly.
 | `⌘N` | New file |
 | `⌘⇧N` | New folder |
 | `⌘W` | Close file |
+| `⌘⇧R` | Rename the selected file (or folder) — double-clicking a name works too |
 | `⌘1` / `⌘2` / `⌘3` | Switch to Ideate / Write / Review mode |
 | `⌘⇧1` / `⌘⇧2` / `⌘⇧3` | Set editor width: narrow / normal / full |
 | `⌘D` | Toggle the workspace/folder tree |

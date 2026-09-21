@@ -5,7 +5,7 @@ import { useFileOperations } from "./useFileOperations";
 
 /**
  * Cmd+K (jump-to-anything command palette), Cmd+N/Shift+N (new file/folder),
- * Cmd+W (close file), Cmd+1/2/3 (writing mode: Ideate/Write/Review),
+ * Cmd+W (close file), Shift+Cmd+R (rename selected file, else folder), Cmd+1/2/3 (writing mode: Ideate/Write/Review),
  * Cmd+Shift+1/2/3 (width presets), Cmd+D/Shift+Cmd+D (toggle Workspaces/
  * Content columns), Cmd+J (toggle right sidebar), Shift+Cmd+F (toggle fullscreen),
  * Escape (exit fullscreen), Cmd+Plus/Minus/0 (app font scale — deliberately NOT
@@ -14,7 +14,11 @@ import { useFileOperations } from "./useFileOperations";
  */
 export function useGlobalShortcuts() {
   const selectedFolderPath = useWorkspaceStore((s) => s.selectedFolderPath);
+  const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
   const selectFile = useWorkspaceStore((s) => s.selectFile);
+  const startRename = useWorkspaceStore((s) => s.startRename);
+  const treeVisible = useUiStore((s) => s.treeVisible);
+  const fileListVisible = useUiStore((s) => s.fileListVisible);
   const setWidthPreset = useUiStore((s) => s.setWidthPreset);
   const setWritingMode = useUiStore((s) => s.setWritingMode);
   const incrementFontScale = useUiStore((s) => s.incrementFontScale);
@@ -61,6 +65,15 @@ export function useGlobalShortcuts() {
       } else if (key === "w") {
         e.preventDefault();
         selectFile(null);
+      } else if (key === "r" && e.shiftKey) {
+        // Shift+Cmd+R rather than F2 (which only works with a row focused)
+        // or Cmd+R (WebKit reload during dev). The inline rename input is
+        // rendered by the row itself, so only start one when the column
+        // holding that row is actually on screen — otherwise the input
+        // would pop up unasked the next time the column is shown.
+        e.preventDefault();
+        if (selectedFilePath && fileListVisible) startRename(selectedFilePath);
+        else if (selectedFolderPath && treeVisible) startRename(selectedFolderPath);
       } else if (key === "d" && e.shiftKey) {
         e.preventDefault();
         toggleFileListVisible();
@@ -106,7 +119,11 @@ export function useGlobalShortcuts() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
     selectedFolderPath,
+    selectedFilePath,
     selectFile,
+    startRename,
+    treeVisible,
+    fileListVisible,
     setWidthPreset,
     setWritingMode,
     createFileMutation,

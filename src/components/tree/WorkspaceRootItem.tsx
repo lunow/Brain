@@ -64,6 +64,7 @@ export function WorkspaceRootItem({ root, homeDir, onRemoveRoot }: WorkspaceRoot
         tabIndex={0}
         className={`${styles.row} ${isSelected ? styles.rowSelected : ""} ${isOver ? styles.rowDropTarget : ""}`}
         onClick={() => selectFolder(root.path)}
+        onDoubleClick={() => startRename(root.path)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();

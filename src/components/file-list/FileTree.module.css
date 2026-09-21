@@ -12,8 +12,14 @@
   cursor: default;
 }
 
-.folderRow:hover {
+.folderRow:hover,
+.folderRowDropTarget {
   background: var(--bg-hover);
+}
+
+.folderRowDropTarget {
+  outline: 1px solid var(--text-tertiary);
+  outline-offset: -1px;
 }
 
 .folderIcon {

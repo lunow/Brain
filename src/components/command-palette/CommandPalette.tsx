@@ -41,6 +41,7 @@ export function CommandPalette() {
   const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
   const selectFolder = useWorkspaceStore((s) => s.selectFolder);
   const selectFile = useWorkspaceStore((s) => s.selectFile);
+  const startRename = useWorkspaceStore((s) => s.startRename);
 
   const { createFileMutation, createFolderMutation } = useFileOperations();
   const { requestExport } = useExport();
@@ -108,6 +109,7 @@ export function CommandPalette() {
         createFile: () => selectedFolderPath && createFileMutation.mutate(selectedFolderPath),
         createFolder: () => selectedFolderPath && createFolderMutation.mutate(selectedFolderPath),
         addRoot: () => addRoot.mutate(),
+        renameFile: () => selectedFilePath && startRename(selectedFilePath),
         setWritingMode,
         toggleTreeVisible,
         toggleFileListVisible,

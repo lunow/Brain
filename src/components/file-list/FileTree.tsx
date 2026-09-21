@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useDroppable } from "@dnd-kit/core";
 import { listDirChildren, listMarkdownFiles, type DirEntryLite } from "@/lib/tauri-commands";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { FolderIcon, FolderOpenIcon } from "@/components/common/icons";
@@ -28,12 +29,17 @@ function FileTreeFolder({ path, name, depth }: { path: string; name: string; dep
   const subfolders = sortByName(children?.filter((c) => c.isDir));
   const sortedFiles = files ? [...files].sort((a, b) => a.name.localeCompare(b.name)) : files;
 
+  // Same droppable id/data shape as the workspace roots, so App's
+  // onDragEnd moves files here without knowing which column they landed in.
+  const { isOver, setNodeRef } = useDroppable({ id: `folder:${path}`, data: { kind: "folder", path } });
+
   return (
     <div>
       <div
+        ref={setNodeRef}
         role="button"
         tabIndex={0}
-        className={styles.folderRow}
+        className={`${styles.folderRow} ${isOver ? styles.folderRowDropTarget : ""}`}
         style={{ paddingLeft: `calc(var(--space-3) + ${depth * 14}px)` }}
         onClick={() => toggleExpanded(path)}
         onKeyDown={(e) => {

@@ -5,6 +5,24 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 4
+
+**Sidebar**
+
+- Double-click a file or workspace folder to rename it inline. `⌘⇧R` renames
+  the selected file (or, with no file open, the selected workspace folder),
+  and "Rename File" is available in the command palette.
+- Files can now be dragged onto subfolders in the Content column, not just
+  onto workspace roots. The target folder expands after the drop so the
+  moved file stays in view.
+
+**App**
+
+- A small version badge sits in the top-right corner of the title bar.
+- The `brain` command-line launcher now ships inside the app bundle
+  (`Brain.app/Contents/Resources/bin/brain`); symlink it into your `PATH`
+  once and it keeps working across updates. See the README.
+
 ## Version 3
 
 **Editor**

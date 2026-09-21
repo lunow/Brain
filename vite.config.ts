@@ -2,12 +2,19 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 import { tauriDevApiPlugin } from "./vite.dev-api";
+import pkg from "./package.json";
 
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   plugins: [react(), tauriDevApiPlugin()],
+
+  // package.json is bumped together with tauri.conf.json/Cargo.toml on
+  // release (see CLAUDE.md), so it's the single source for the in-app badge.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
 
   resolve: {
     alias: {

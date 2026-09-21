@@ -17,6 +17,23 @@
      row (Workspaces/Content) below via the hairline border. */
   background: var(--bg-titlebar);
   border-bottom: 1px solid var(--border-hairline);
+  position: relative;
+}
+
+/* Quiet version badge in the titlebar's top-right corner: silver-on-silver
+   so it doesn't compete with the window title, but there when you need to
+   check which release you're running. */
+.version {
+  position: absolute;
+  top: 0;
+  right: var(--space-3);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  user-select: none;
+  pointer-events: none;
 }
 
 .row {

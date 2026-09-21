@@ -5,6 +5,7 @@ interface WorkspaceState {
    *  "Subfolders" is on. */
   expandedFileTreePaths: Set<string>;
   toggleFileTreeExpanded: (path: string) => void;
+  expandFileTreePath: (path: string) => void;
 
   selectedFolderPath: string | null;
   selectFolder: (path: string | null) => void;
@@ -38,6 +39,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       }
       return { expandedFileTreePaths: next };
     }),
+  expandFileTreePath: (path) =>
+    set((state) =>
+      state.expandedFileTreePaths.has(path)
+        ? state
+        : { expandedFileTreePaths: new Set(state.expandedFileTreePaths).add(path) },
+    ),
 
   includeSubfolders: true,
   toggleIncludeSubfolders: () => set((state) => ({ includeSubfolders: !state.includeSubfolders })),

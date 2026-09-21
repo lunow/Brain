@@ -26,7 +26,13 @@ export function ThreeColumnLayout({ tree, fileList, main }: ThreeColumnLayoutPro
 
   return (
     <div className={styles.layout}>
-      <div className={styles.titlebarSpacer} data-tauri-drag-region />
+      <div className={styles.titlebarSpacer} data-tauri-drag-region>
+        {/* Releases are "Version N" (see CHANGELOG.md); the trailing .0.0 is
+            only there for tooling, so the badge drops it. */}
+        <span className={styles.version}>
+          Version {__APP_VERSION__.split(".")[0]}
+        </span>
+      </div>
       <div className={styles.row}>
         {treeVisible && !fullscreenActive && (
           <>

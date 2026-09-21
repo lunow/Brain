@@ -44,6 +44,7 @@ export function FileRow({ file, depth = 0 }: { file: MarkdownFileEntry; depth?: 
         className={`${styles.row} ${isSelected ? styles.rowSelected : ""}`}
         style={{ opacity: isDragging ? 0.4 : 1, paddingLeft: `calc(var(--space-3) + ${depth * 14}px)` }}
         onClick={() => selectFile(file.path)}
+        onDoubleClick={() => startRename(file.path)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
