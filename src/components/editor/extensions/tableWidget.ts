@@ -390,7 +390,7 @@ export class TableWidget extends WidgetType {
       // shifts. Pin the scroll position across the dispatch to cancel that.
       const scrollParent = findScrollParent(view.dom);
       const scrollTop = scrollParent?.scrollTop;
-      // Tagged so MarkdownEditor's typewriter-scroll effect can ignore it: cell
+      // Tagged so the typewriterScroll extension can ignore it: cell
       // editing happens in a plain contentEditable DOM node outside CM's own
       // selection, so state.selection.main.head here is stale (wherever the
       // cursor was left before the table was ever touched, often doc start) —

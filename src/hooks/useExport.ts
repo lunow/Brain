@@ -23,6 +23,12 @@ async function exportPdf(filePath: string) {
   await writeBinaryFile(target, bytes);
 }
 
+/** Puts the file's markdown source on the system clipboard as plain text. */
+async function exportClipboard(filePath: string) {
+  const content = await readFile(filePath);
+  await navigator.clipboard.writeText(content);
+}
+
 /**
  * Centralizes the export action so both the editor toolbar's ExportMenu and
  * the Cmd+K command palette trigger the same code path.
@@ -33,6 +39,10 @@ export function useExport() {
     if (!filePath) return;
     if (kind === "pdf") {
       exportPdf(filePath).catch((err) => console.error("PDF export failed", err));
+      return;
+    }
+    if (kind === "clipboard") {
+      exportClipboard(filePath).catch((err) => console.error("Copy to clipboard failed", err));
       return;
     }
     console.log("export", kind, filePath);

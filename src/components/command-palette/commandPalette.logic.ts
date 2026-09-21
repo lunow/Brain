@@ -129,6 +129,7 @@ export function buildCommands(ctx: CommandContext): CommandResult[] {
     { type: "command", id: "export-pdf", section: "Export", label: "Export as PDF", run: () => ctx.requestExport("pdf") },
     { type: "command", id: "export-word", section: "Export", label: "Export as Word", run: () => ctx.requestExport("word") },
     { type: "command", id: "export-publish", section: "Export", label: "Publish", run: () => ctx.requestExport("publish") },
+    { type: "command", id: "export-clipboard", section: "Export", label: "Copy to clipboard", run: () => ctx.requestExport("clipboard") },
   ];
 }
 

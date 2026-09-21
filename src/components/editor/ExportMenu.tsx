@@ -6,6 +6,7 @@ const OPTIONS = [
   { key: "pdf", label: "PDF" },
   { key: "word", label: "Word" },
   { key: "publish", label: "Publish" },
+  { key: "clipboard", label: "Copy to clipboard" },
 ] as const;
 
 export type ExportKind = (typeof OPTIONS)[number]["key"];
