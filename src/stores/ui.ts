@@ -15,7 +15,11 @@ export const FILE_LIST_WIDTH_MAX = 480;
 export const RIGHT_SIDEBAR_WIDTH_MIN = 240;
 export const RIGHT_SIDEBAR_WIDTH_MAX = 560;
 
-const PANEL_WIDTHS_STORAGE_KEY = "write:panelWidths";
+/* Version-bumped whenever the defaults below change: the widths persist on
+   the first drag of a resizer, and a stored width always wins over a
+   default — so without a new key a changed default is invisible to anyone
+   who has ever resized a column. */
+const PANEL_WIDTHS_STORAGE_KEY = "write:panelWidths:v3";
 
 interface PanelWidths {
   tree: number;
@@ -23,7 +27,11 @@ interface PanelWidths {
   rightSidebar: number;
 }
 
-const DEFAULT_PANEL_WIDTHS: PanelWidths = { tree: 260, fileList: 260, rightSidebar: 320 };
+/* The two side columns are sized to their content rather than to a round
+   number: 280 lets a workspace row's "~/path" and stats line read without
+   truncating on a typical vault, and 320 fits a dated filename like
+   "2026-01-15-soil-carbon-explained.md" at one level of nesting. */
+const DEFAULT_PANEL_WIDTHS: PanelWidths = { tree: 280, fileList: 320, rightSidebar: 320 };
 
 function loadPanelWidths(): PanelWidths {
   try {

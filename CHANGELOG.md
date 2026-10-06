@@ -5,6 +5,77 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 5
+
+A redesign of the three-column layout, and a new typeface for the writing
+area.
+
+**Content column**
+
+- The file list is now a real folder tree: disclosure chevrons, an icon on
+  every file, and no preview sub-line under each name. Folders come first
+  at every level, then files, each ordered naturally by name — so
+  "Chapter 2" sorts before "Chapter 10" rather than after it.
+- Drag and drop moves both files *and* folders into any folder. Dropping
+  onto the tree's background moves an entry back out to the workspace
+  root. A folder can't be dropped into itself or into one of its own
+  subfolders.
+- Double-click a folder to rename it, the same as files already did.
+- Right-click a folder for New File, New Folder, Rename, Reveal in Finder
+  and Delete; right-click the empty space below the tree to create at the
+  workspace root. New File and New Folder buttons sit in the column header.
+- Arrow keys walk the whole tree: up/down through every visible row, right
+  to open a folder or step into it, left to close it or step back out to
+  its parent, Home/End for the ends. Focus is shown with a ring and is
+  deliberately separate from the selection — Enter opens the focused file.
+- Jumping to a file from `⌘K` now opens every folder between the workspace
+  root and that file and scrolls it into view, instead of re-rooting the
+  column onto the file's parent folder (which also left the Workspaces
+  column with nothing selected).
+- The per-row separator lines are gone; nesting is carried by indentation
+  and one guide line per open folder.
+- The "include subfolders" toggle has been removed — a collapsed folder
+  already hides its contents, which is all it did.
+
+**Typography**
+
+- The writing area is set in Charter, a crisper screen serif than the
+  previous New York, at a slightly larger reading size.
+- Headings now follow the law of proximity: the space above a heading is
+  larger than the space below it, so a heading groups with the text it
+  introduces instead of floating between two blocks. Scaled by level — an
+  h1 gets a longer run-up than an h4.
+- Paragraph spacing is tighter, so a run of paragraphs reads as one block
+  of thought. The last paragraph before a heading, a list, or the end of
+  the document keeps a little more room to close the group off. Blank
+  lines inside fenced code, frontmatter, tables and quotes are untouched.
+
+**Layout**
+
+- The window opens larger (1680×1000), and the writing column is wider —
+  a 1000px page, centered in its pane with even margins rather than sitting
+  flush against the Content column.
+- The Workspaces and Content columns are wider too, enough for a
+  workspace's path and stats line and for a dated filename one level deep.
+- All three column headers share one baseline grid, so their labels line
+  up across the window.
+- Switching width presets (`⇧⌘1/2/3`) no longer animates.
+- The current workspace shows an open folder icon.
+
+**Editor**
+
+- A file edited by another program now folds into the open document in
+  place, keeping your scroll position, cursor and undo history, instead of
+  reloading the editor from the top. If the file has unsaved changes you
+  still get the conflict banner.
+
+**Fixes**
+
+- A short document now fills the full height of the writing pane. It
+  previously stopped short of the bottom, leaving a strip of the canvas
+  showing below it.
+- Wide tables no longer run past the right edge of the writing pane.
+
 ## Version 4
 
 **Sidebar**

@@ -11,7 +11,11 @@
   height: var(--panel-header-height);
   flex-shrink: 0;
   box-sizing: border-box;
-  padding: 0 var(--space-3);
+  /* --panel-pad-x on the left is shared with the tree rows below and with
+     the Workspaces header, so all three columns' labels share a baseline
+     grid. The right side is tighter because it holds icon buttons, whose
+     own padding supplies the rest of the inset. */
+  padding: 0 var(--space-2) 0 var(--panel-pad-x);
   border-bottom: 1px solid var(--border-hairline);
 }
 
@@ -23,90 +27,36 @@
 }
 
 .title {
-  font-size: 12px;
+  font-size: var(--type-ui-caption);
   font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-label);
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 2px;
 }
 
-.toggle {
+.action {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-sm);
   color: var(--text-tertiary);
 }
 
-.toggle:hover {
-  color: var(--text-primary);
+.action:hover {
   background: var(--bg-hover-filelist);
-}
-
-.toggle[data-active="true"] {
-  color: var(--text-secondary);
-}
-
-.addButton {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.addButton:hover {
-  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
 .empty {
-  padding: var(--space-3);
+  padding: var(--space-3) var(--panel-pad-x);
   color: var(--text-tertiary);
   font-size: 13px;
-}
-
-.row {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border-hairline);
-}
-
-.row:hover {
-  background: var(--bg-hover-filelist);
-}
-
-.rowSelected {
-  background: var(--bg-active-filelist);
-}
-
-.name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.preview {
-  margin-top: 2px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }

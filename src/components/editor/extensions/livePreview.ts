@@ -54,6 +54,20 @@ const HEADING_CLASS: Record<string, string> = {
   ATXHeading6: "cm-mkH6",
 };
 
+/** Companion to HEADING_CLASS, applied to the heading's whole LINE rather
+ *  than to the heading text. HEADING_CLASS lands on an inline span, which
+ *  can't carry vertical space — a block-level line decoration can, and
+ *  that's what gives a heading more room above it than below (see the
+ *  .cm-mkHeadingLine rules in editor.css). */
+const HEADING_LINE_CLASS: Record<string, string> = {
+  ATXHeading1: "cm-mkHeadingLine cm-mkHeadingLine1",
+  ATXHeading2: "cm-mkHeadingLine cm-mkHeadingLine2",
+  ATXHeading3: "cm-mkHeadingLine cm-mkHeadingLine3",
+  ATXHeading4: "cm-mkHeadingLine cm-mkHeadingLine4",
+  ATXHeading5: "cm-mkHeadingLine cm-mkHeadingLine5",
+  ATXHeading6: "cm-mkHeadingLine cm-mkHeadingLine6",
+};
+
 function isLineRangeActive(state: EditorState, from: number, to: number): boolean {
   const lineFrom = state.doc.lineAt(from).from;
   const lineTo = state.doc.lineAt(to).to;
@@ -67,6 +81,59 @@ interface PendingDecoration {
   from: number;
   to: number;
   deco: Decoration;
+  /** Line decorations must be emitted before any other decoration starting
+   *  at the same offset, or RangeSetBuilder rejects the set as unsorted. */
+  isLine?: boolean;
+}
+
+
+/** The top-level block a position sits in, or "Document" when it sits
+ *  between blocks — which is exactly where a separating blank line is. */
+function topLevelBlockAt(state: EditorState, pos: number): string {
+  let node = syntaxTree(state).resolveInner(pos, 1);
+  while (node.parent && node.parent.name !== "Document") node = node.parent;
+  return node.name;
+}
+
+/**
+ * Spacing for the blank lines BETWEEN blocks.
+ *
+ * The document stays plain markdown, so the gap between two paragraphs is
+ * a real empty line, and every empty line is the same height as a line of
+ * prose — far more air than paragraph spacing wants. These shrink it, and
+ * shrink it by different amounts depending on what comes next: a run of
+ * paragraphs reads as one block of thought and wants to be tight, while
+ * the last paragraph before something else (a heading, a list, the end of
+ * the document) wants a little more room to close the group off.
+ *
+ * Only blank lines that actually separate top-level blocks are touched —
+ * a blank line inside fenced code, frontmatter, a table or a quote
+ * resolves to that block rather than to "Document", and is left alone.
+ */
+function collectBlankLineDecorations(state: EditorState): PendingDecoration[] {
+  const out: PendingDecoration[] = [];
+  const lineCount = state.doc.lines;
+
+  for (let i = 1; i <= lineCount; i++) {
+    const line = state.doc.line(i);
+    if (line.text.trim().length !== 0) continue;
+    if (topLevelBlockAt(state, line.from) !== "Document") continue;
+
+    // Skip any further blank lines to find the block this gap leads into.
+    let next = i + 1;
+    while (next <= lineCount && state.doc.line(next).text.trim().length === 0) next++;
+    const leadsIntoParagraph =
+      next <= lineCount && topLevelBlockAt(state, state.doc.line(next).from) === "Paragraph";
+
+    out.push({
+      from: line.from,
+      to: line.from,
+      isLine: true,
+      deco: Decoration.line({ class: leadsIntoParagraph ? "cm-mkBlankTight" : "cm-mkBlankLoose" }),
+    });
+  }
+
+  return out;
 }
 
 function buildDecorations(state: EditorState): DecorationSet {
@@ -139,6 +206,17 @@ function buildDecorations(state: EditorState): DecorationSet {
 
       if (type in HEADING_CLASS) {
         pending.push({ from: node.from, to: node.to, deco: Decoration.mark({ class: HEADING_CLASS[type] }) });
+        // Zero-length, at the line's start: CM6 requires a line decoration
+        // to sit exactly there. isLine marks it for the sort below, which
+        // has to emit it ahead of any mark/replace starting at the same
+        // offset (the hidden "## " does).
+        const lineStart = state.doc.lineAt(node.from).from;
+        pending.push({
+          from: lineStart,
+          to: lineStart,
+          isLine: true,
+          deco: Decoration.line({ class: HEADING_LINE_CLASS[type] }),
+        });
         return;
       }
 
@@ -237,8 +315,11 @@ function buildDecorations(state: EditorState): DecorationSet {
   smartTextExcluded.push(...pathLinks.map((p) => ({ from: p.from, to: p.to })));
   pending.push(...pathLinks);
   pending.push(...collectSmartTypographyDecorations(state, smartTextExcluded));
+  pending.push(...collectBlankLineDecorations(state));
 
-  pending.sort((a, b) => a.from - b.from || a.to - b.to);
+  pending.sort(
+    (a, b) => a.from - b.from || Number(b.isLine ?? false) - Number(a.isLine ?? false) || a.to - b.to,
+  );
 
   const builder = new RangeSetBuilder<Decoration>();
   for (const { from, to, deco } of pending) {

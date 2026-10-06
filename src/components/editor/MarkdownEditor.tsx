@@ -13,6 +13,7 @@ import { frontmatterExtension } from "./extensions/frontmatter";
 import { editorTheme } from "./extensions/theme";
 import { reviewSuggestionsExtension, setSuggestionsEffect, type SuggestionAction } from "./extensions/reviewSuggestions";
 import { typewriterScroll } from "./extensions/typewriterScroll";
+import { externalReloadAnnotation, minimalReplacement } from "./externalSync";
 import type { PlacedSuggestion } from "@/lib/reviewSuggestions";
 import "./editor.css";
 import styles from "./MarkdownEditor.module.css";
@@ -21,6 +22,11 @@ interface MarkdownEditorProps {
   content: string;
   filePath: string;
   onChange: (content: string) => void;
+  /** Fresh on-disk content to fold into the live document, bumped by the
+   *  parent whenever it decides an external change should be adopted. The
+   *  token (not the text) drives the sync, so re-reading the file and getting
+   *  the same bytes back is still a no-op. */
+  externalReload?: { text: string; token: number } | null;
   /** Review-mode suggestions for this file, rendered as inline decorations
    *  via reviewSuggestionsExtension. Empty outside Review mode. */
   suggestions?: PlacedSuggestion[];
@@ -38,12 +44,16 @@ interface MarkdownEditorProps {
 /**
  * One CodeMirror EditorView per mounted instance. The parent keys this
  * component by file path so switching files remounts a fresh editor rather
- * than trying to hot-swap the document into a live EditorState.
+ * than trying to hot-swap the document into a live EditorState. A file
+ * changing *underneath* an open editor is not a remount: it's patched into
+ * the live document via `externalReload` so the view keeps its scroll
+ * position, selection and undo history.
  */
 export function MarkdownEditor({
   content,
   filePath,
   onChange,
+  externalReload,
   suggestions = [],
   onResolveSuggestion,
   onViewReady,
@@ -73,9 +83,11 @@ export function MarkdownEditor({
         editorTheme,
         reviewSuggestionsExtension((id, action) => onResolveSuggestionRef.current?.(id, action)),
         EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            onChangeRef.current(update.state.doc.toString());
-          }
+          if (!update.docChanged) return;
+          // A reload from disk is not a user edit: reporting it would mark the
+          // file dirty and schedule an autosave of what we just read back.
+          if (update.transactions.some((tr) => tr.annotation(externalReloadAnnotation))) return;
+          onChangeRef.current(update.state.doc.toString());
         }),
         typewriterScroll(() => scrollParentRef?.current ?? null),
       ],
@@ -98,6 +110,23 @@ export function MarkdownEditor({
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setSuggestionsEffect.of(suggestions) });
   }, [suggestions]);
+
+  // Adopt a change made to the file on disk by patching only the bytes that
+  // actually differ, so the editor stays exactly where the user left it.
+  const appliedReloadToken = useRef(externalReload?.token ?? 0);
+  useEffect(() => {
+    if (!externalReload || externalReload.token === appliedReloadToken.current) return;
+    appliedReloadToken.current = externalReload.token;
+    const view = viewRef.current;
+    if (!view) return;
+    const replacement = minimalReplacement(view.state.doc.toString(), externalReload.text);
+    if (!replacement) return;
+    view.dispatch({
+      changes: replacement,
+      annotations: externalReloadAnnotation.of(true),
+      scrollIntoView: false,
+    });
+  }, [externalReload]);
 
   return <div className={styles.host} ref={hostRef} />;
 }

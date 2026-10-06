@@ -72,7 +72,10 @@ export function FileEditor() {
 
   const [dirty, setDirty] = useState(false);
   const [conflict, setConflict] = useState(false);
-  const [reloadNonce, setReloadNonce] = useState(0);
+  // Fresh on-disk content handed to the live editor to patch in place. The
+  // editor is deliberately NOT remounted for this: a remount builds a new
+  // EditorView and so resets the scroll position to the top of the file.
+  const [externalReload, setExternalReload] = useState<{ text: string; token: number } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingContent = useRef<string | null>(null);
@@ -128,6 +131,7 @@ export function FileEditor() {
   useEffect(() => {
     setDirty(false);
     setConflict(false);
+    setExternalReload(null);
     pendingContent.current = null;
     lastWrittenContent.current = null;
   }, [selectedFilePath]);
@@ -159,10 +163,12 @@ export function FileEditor() {
   }, [selectedFilePath, initialContent]);
 
   // External-change detection for the currently open file. If it has no
-  // unsaved edits, silently reload; if it does, surface a conflict banner
-  // rather than clobbering local changes. We always read the fresh content
-  // first and compare it against lastWrittenContent — the exact bytes of
-  // our own last autosave — so an echo of our own write is recognized and
+  // unsaved edits, silently fold the new content into the live document (see
+  // MarkdownEditor's externalReload) so the user keeps their scroll position,
+  // cursor and undo history; if it does have unsaved edits, surface a conflict
+  // banner rather than clobbering local changes. We always read the fresh
+  // content first and compare it against lastWrittenContent — the exact bytes
+  // of our own last autosave — so an echo of our own write is recognized and
   // ignored outright, even if the user resumed typing (and dirty flipped
   // back to true) in the ~400ms the fs watcher takes to report it.
   useEffect(() => {
@@ -184,8 +190,9 @@ export function FileEditor() {
         }
 
         const knownContent = pendingContent.current ?? initialContent;
-        if (freshContent === knownContent) return;
-        setReloadNonce((n) => n + 1);
+        if (freshContent === knownContent || freshContent === undefined) return;
+        pendingContent.current = null;
+        setExternalReload((prev) => ({ text: freshContent, token: (prev?.token ?? 0) + 1 }));
       });
     });
 
@@ -208,7 +215,9 @@ export function FileEditor() {
     setDirty(false);
     pendingContent.current = null;
     await queryClient.invalidateQueries({ queryKey: ["fileContent", selectedFilePath] });
-    setReloadNonce((n) => n + 1);
+    const freshContent = queryClient.getQueryData<string>(["fileContent", selectedFilePath]);
+    if (freshContent === undefined) return;
+    setExternalReload((prev) => ({ text: freshContent, token: (prev?.token ?? 0) + 1 }));
   }
 
   if (!selectedFilePath) {
@@ -272,8 +281,9 @@ export function FileEditor() {
               data-centered={fullscreenActive && widthPreset !== "full"}
             >
               <MarkdownEditor
-                key={`${selectedFilePath}:${reloadNonce}`}
+                key={selectedFilePath}
                 content={initialContent}
+                externalReload={externalReload}
                 filePath={selectedFilePath}
                 onChange={handleChange}
                 suggestions={visibleSuggestions}

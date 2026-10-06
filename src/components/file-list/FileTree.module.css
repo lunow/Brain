@@ -1,34 +1,138 @@
-.folderRow {
+/*
+ * The Content column's folder/file tree. Rows are full-bleed (no per-row
+ * borders — the hairline-per-file list this replaced is what made the column
+ * read as a heavy table rather than a tree); nesting is carried by the
+ * indent plus one vertical guide per open ancestor.
+ */
+
+.tree {
+  /* Fills the scroll area even when near-empty, so the whole column stays a
+     drop target for moving entries back out to the workspace root. */
+  min-height: 100%;
+  padding: var(--space-2) 0 var(--space-5);
+  box-sizing: border-box;
+}
+
+/* Dropping on the background (rather than on a folder row) targets the
+   workspace root. Marked with an inset ring on the column itself, since
+   there's no row to outline. */
+.tree[data-drop-target="true"] {
+  box-shadow: inset 0 0 0 1px var(--text-tertiary);
+}
+
+.children {
+  position: relative;
+}
+
+/* One hairline per open folder, running down through its children and
+   centered on the parent's own chevron — so the eye can trace a nested file
+   back to the folder holding it. --depth here is the *parent's* depth, set
+   alongside the same var on the parent row. */
+.children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--panel-pad-x) + (var(--depth) + 0.5) * var(--tree-indent));
+  width: 1px;
+  background: var(--tree-guide);
+  pointer-events: none;
+}
+
+.row {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  padding-right: var(--space-3);
+  height: var(--row-height);
+  box-sizing: border-box;
+  /* Shares --panel-pad-x with the column's header, so a depth-0 row's
+     chevron lines up under the "Content" label. */
+  padding-left: calc(var(--panel-pad-x) + var(--depth) * var(--tree-indent));
+  padding-right: var(--space-2);
   text-align: left;
   font-size: 13px;
   color: var(--text-primary);
   cursor: default;
+  user-select: none;
 }
 
-.folderRow:hover,
-.folderRowDropTarget {
-  background: var(--bg-hover);
+.row:hover {
+  background: var(--bg-hover-filelist);
 }
 
-.folderRowDropTarget {
-  outline: 1px solid var(--text-tertiary);
-  outline-offset: -1px;
+.row[data-selected="true"] {
+  background: var(--bg-active-filelist);
+  font-weight: 500;
 }
 
-.folderIcon {
+/* The row being dragged stays in place but dims, so the tree doesn't reflow
+   under the cursor mid-drag. */
+.row[data-dragging="true"] {
+  opacity: 0.4;
+}
+
+/* Keyboard focus. Arrow navigation moves focus without changing the
+   selection, so this has to be visible on its own — and distinct from the
+   selected row's fill, since the two are frequently different rows. */
+.row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--text-tertiary);
+}
+
+/* Hover-with-payload: this folder is what a drop would move into. */
+.row[data-drop-target="true"] {
+  background: var(--bg-active-filelist);
+  box-shadow: inset 0 0 0 1px var(--text-tertiary);
+}
+
+/* Fixed-width disclosure slot. Files get .disclosureSpacer at the same
+   width, which is what keeps every icon in a level on one column. */
+.disclosure,
+.disclosureSpacer {
+  flex-shrink: 0;
+  width: var(--tree-indent);
+  height: var(--tree-indent);
+}
+
+.disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: transform 0.12s ease;
+}
+
+.disclosure:hover {
+  color: var(--text-primary);
+}
+
+.disclosure[data-expanded="true"] {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure {
+    transition: none;
+  }
+}
+
+.icon {
   flex-shrink: 0;
   color: var(--text-tertiary);
 }
 
-.folderName {
+.row[data-selected="true"] .icon {
+  color: var(--text-secondary);
+}
+
+.name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.empty {
+  padding: var(--space-2) var(--panel-pad-x);
+  color: var(--text-tertiary);
+  font-size: 13px;
 }

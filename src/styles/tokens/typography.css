@@ -15,7 +15,13 @@
 
   /* --- Font stacks. Emoji fallback appended everywhere so emoji in
      running text never blow out the line box. --- */
-  --font-serif: ui-serif, "New York", Georgia, serif, "Apple Color Emoji";
+  /* Charter (Bitstream, Matthew Carter) ships with macOS at
+     /System/Library/Fonts/Supplemental/Charter.ttc with real Roman, Italic,
+     Bold, Bold Italic and Black faces — so no synthesized obliques or
+     faux-bold, and no bundled webfont. Chosen over ui-serif/New York for a
+     crisper, less bookish screen serif; New York stays as the fallback
+     since it's the one face guaranteed present on every macOS version. */
+  --font-serif: Charter, ui-serif, "New York", Georgia, serif, "Apple Color Emoji";
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif, "Apple Color Emoji";
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace, "Apple Color Emoji";
 
@@ -24,13 +30,17 @@
      restrained proportions already validated visually (h1 stays a
      heading, not a hero) rather than compounding a strict ratio across
      six full steps, which read too large for a minimalist writing app. --- */
-  --type-editor-body: 1.0625rem; /* 17px */
-  --type-editor-h1: 1.75rem; /* 28px */
-  --type-editor-h2: 1.4375rem; /* 23px */
-  --type-editor-h3: 1.1875rem; /* 19px */
-  --type-editor-h4: 1.0625rem; /* 17px, weight-differentiated from body */
-  --type-editor-h5: 1.0625rem;
-  --type-editor-h6: 1.0625rem;
+  /* Charter runs a touch smaller on the body than New York at the same em
+     size (smaller x-height, narrower advances), so the reading size is
+     nudged a half-step up from the 17px macOS anchor to land at the same
+     optical size. Headings scale with it. */
+  --type-editor-body: 1.125rem; /* 18px */
+  --type-editor-h1: 1.8125rem; /* 29px */
+  --type-editor-h2: 1.5rem; /* 24px */
+  --type-editor-h3: 1.25rem; /* 20px */
+  --type-editor-h4: 1.125rem; /* 18px, weight-differentiated from body */
+  --type-editor-h5: 1.125rem;
+  --type-editor-h6: 1.125rem;
   --type-editor-code: 0.9375rem; /* 15px, fenced code blocks */
 
   --type-ui-label: 0.9375rem; /* 15px — primary UI chrome text */
@@ -55,20 +65,29 @@
      and "Full" are the app's existing width-preset buttons (an explicit
      product requirement, distinct from this "wide" concept) — Full stays
      genuinely uncapped, edge-to-edge, not tied to a 78ch "wide" tier. --- */
-  --measure-narrow: 50ch;
-  --measure: 75ch;
+  --measure-narrow: 58ch;
+  /* Fixed rather than ch-based. reset.css sets box-sizing: border-box
+     globally, so this caps the visible sheet's full width, padding
+     included: 1000px of page, ~904px of text at --page-padding-x.
+
+     A px measure means Cmd +/- changes the type size without reflowing the
+     column, which is what a fixed-width page implies. --measure-narrow
+     stays in ch, where tracking the font size is the point of the preset.
+
+     The page is still capped by the editor pane, so a narrow window just
+     fills the pane rather than overflowing it. Reaching the full 1000px
+     needs a window of at least 1000px plus both side columns (~1602px at
+     their default widths) — hence the window size in tauri.conf.json. */
+  --measure: 1000px;
   --measure-full: none;
 
-  /* Default (light mode): full heading weight. Approximates the spec's
-     "reduce optical weight ~1 notch in dark mode" — system fonts don't
-     expose a controllable variable wght axis via CSS the way a bundled
-     variable font file would, so this steps down standard font-weight
-     values instead of a true variable-axis adjustment. */
-  --heading-weight: 600;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --heading-weight: 500;
-  }
+  /* Charter ships exactly three upright weights — Roman (400), Bold (700)
+     and Black (900) — with no semibold in between. CSS font matching maps a
+     request for 600 up to Bold and a request for 500 *down* to Roman, so
+     the previous light-600/dark-500 pairing would have collapsed dark-mode
+     headings to body weight rather than shaving a notch off them. Bold in
+     both modes instead; the dark-mode optical correction is carried by
+     -webkit-font-smoothing: antialiased in typography.css, which already
+     thins Charter's stems noticeably against a dark ground. */
+  --heading-weight: 700;
 }

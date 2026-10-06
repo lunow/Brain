@@ -47,9 +47,28 @@
   --space-5: 24px;
   --space-6: 32px;
 
+  /* --- Chrome rhythm. Every panel header, row and tree indent derives from
+     these three, so the Workspaces/Content/editor-toolbar headers sit on a
+     shared grid instead of each carrying its own hand-tuned padding. --- */
+
+  /* Horizontal inset shared by all three panel headers AND by the rows
+     beneath them, so a column's label and its content share a left edge. */
+  --panel-pad-x: 14px;
+
+  /* Single row height for every list/tree row in both sidebars. */
+  --row-height: 28px;
+
+  /* One nesting step in the Content tree. Also the width reserved for a
+     row's disclosure chevron, so a folder's icon lands exactly one indent
+     step right of its chevron and the icon column stays plumb at depth. */
+  --tree-indent: 16px;
+
   /* Inset of the editor's white "page" content from its own edges — the
-     reading margin around the prose. */
-  --page-padding: 28px;
+     reading margin around the prose. Split per-axis: the horizontal
+     reading margin wants to be generous, but matching it vertically would
+     push the first line of a document uncomfortably far down. */
+  --page-padding-x: 48px;
+  --page-padding-y: 36px;
 
   /* Breathing room around the centered page in fullscreen (Narrow/Width
      only — Full has no cap, so there's no space to add it around). */
@@ -59,6 +78,12 @@
   --radius-md: 6px;
 
   --panel-header-height: 44px;
+
+  /* Vertical hairlines stepping down the Content tree, one per open
+     ancestor, so deep nesting stays readable without the rows themselves
+     carrying borders. Deliberately fainter than --border-hairline: these
+     repeat across the column and would otherwise read as a grid. */
+  --tree-guide: var(--gray-200);
 
   /* Review-mode inline diff. The app is otherwise monochrome by design —
      these are a deliberate, narrowly-scoped exception: accept/reject diffs
@@ -107,6 +132,7 @@
     --text-tertiary: var(--gray-400);
 
     --border-hairline: #333333;
+    --tree-guide: #303030;
 
     --diff-old-bg: #3a2323;
     --diff-old-text: #e08787;
@@ -145,6 +171,7 @@
   --text-tertiary: var(--gray-400);
 
   --border-hairline: #333333;
+  --tree-guide: #303030;
 
   --diff-old-bg: #3a2323;
   --diff-old-text: #e08787;

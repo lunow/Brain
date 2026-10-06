@@ -15,6 +15,13 @@ import { useSettingsStore } from "@/stores/settings";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useEffect } from "react";
 
+/** What the tree and the Workspaces column attach to their draggables and
+ *  droppables — a filesystem entry and which kind it is. */
+interface DragPayload {
+  kind: string;
+  path: string;
+}
+
 function App() {
   useGlobalShortcuts();
   useFsWatcher();
@@ -37,14 +44,26 @@ function App() {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
-    const activeData = active.data.current as { kind: string; path: string } | undefined;
-    const overData = over.data.current as { kind: string; path: string } | undefined;
-    if (activeData?.kind !== "file" || overData?.kind !== "folder") return;
-    // Dropping a file back onto the folder it already lives in is a no-op.
-    if (activeData.path.slice(0, activeData.path.lastIndexOf("/")) === overData.path) return;
-    moveMutation.mutate({ srcPath: activeData.path, destDir: overData.path });
-    // Reveal the moved file if it landed in a collapsed Content-tree folder.
-    expandFileTreePath(overData.path);
+    const activeData = active.data.current as DragPayload | undefined;
+    const overData = over.data.current as DragPayload | undefined;
+    if (!activeData || overData?.kind !== "folder") return;
+    // Files and folders both drag; only folders accept a drop. Anything else
+    // registered with dnd-kit is not a filesystem entry and is ignored.
+    if (activeData.kind !== "file" && activeData.kind !== "folder") return;
+
+    const srcPath = activeData.path;
+    const destDir = overData.path;
+
+    // Dropping an entry back onto the folder it already lives in is a no-op.
+    if (srcPath.slice(0, srcPath.lastIndexOf("/")) === destDir) return;
+    // A folder can't be moved inside itself or inside one of its own
+    // descendants: fs::rename would either fail outright or (on the
+    // copy+delete fallback path) recurse into the copy it is writing.
+    if (activeData.kind === "folder" && (destDir === srcPath || destDir.startsWith(srcPath + "/"))) return;
+
+    moveMutation.mutate({ srcPath, destDir });
+    // Reveal the moved entry if it landed in a collapsed Content-tree folder.
+    expandFileTreePath(destDir);
   }
 
   return (

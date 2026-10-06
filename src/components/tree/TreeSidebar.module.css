@@ -11,7 +11,9 @@
   height: var(--panel-header-height);
   flex-shrink: 0;
   box-sizing: border-box;
-  padding: 0 var(--space-2) 0 var(--space-3);
+  /* Same --panel-pad-x as the Content header and its tree rows, so all
+     three columns' labels share one baseline grid. */
+  padding: 0 var(--space-2) 0 var(--panel-pad-x);
   border-bottom: 1px solid var(--border-hairline);
   /* Opaque even though .tree (ThreeColumnLayout.module.css) is transparent
      (sits on native vibrancy) — the header itself stays a solid readable
@@ -27,16 +29,16 @@
 }
 
 .title {
-  font-size: 12px;
+  font-size: var(--type-ui-caption);
   font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-label);
 }
 
 .addButton {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,18 +53,18 @@
 }
 
 .empty {
-  padding: var(--space-3);
+  padding: var(--space-3) var(--panel-pad-x);
   color: var(--text-tertiary);
   font-size: 13px;
 }
 
 .list {
-  padding-bottom: var(--space-2);
+  padding: var(--space-2) 0 var(--space-5);
 }
 
 .subheader {
-  padding: var(--space-2) var(--space-3) 2px;
-  font-size: 11px;
+  padding: var(--space-3) var(--panel-pad-x) var(--space-1);
+  font-size: var(--type-ui-micro);
   color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -77,12 +79,16 @@
   opacity: 1;
 }
 
+/* Vertically centered on the row rather than pinned near its top: the row
+   is three lines tall (name, path, stats) and an eyeballed top offset read
+   as misaligned against it. */
 .removeButton {
   position: absolute;
-  right: 6px;
-  top: 3px;
-  width: 18px;
-  height: 18px;
+  right: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;

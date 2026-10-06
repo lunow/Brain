@@ -36,12 +36,6 @@ export interface NavIndex {
   files: FileResult[];
 }
 
-/** Parent directory of a path, POSIX-style (this app only targets macOS). */
-export function parentDirOf(path: string): string {
-  const idx = path.lastIndexOf("/");
-  return idx > 0 ? path.slice(0, idx) : path;
-}
-
 /** Case-insensitive match score: 0 = name starts with query, 1 = name
  *  contains it, 2 = only the path contains it, null = no match. Lower is
  *  a better match. An empty query matches everything at score 0. */

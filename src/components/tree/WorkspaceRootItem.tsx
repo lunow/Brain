@@ -5,7 +5,7 @@ import { useWorkspaceStore } from "@/stores/workspace";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { ContextMenu, type ContextMenuEntry } from "@/components/common/ContextMenu";
 import { InlineRenameInput } from "@/components/common/InlineRenameInput";
-import { FolderIcon } from "@/components/common/icons";
+import { FolderIcon, FolderOpenIcon } from "@/components/common/icons";
 import { formatRelativeTime } from "@/lib/relativeTime";
 import { displayPath } from "./displayPath";
 import styles from "./WorkspaceRootItem.module.css";
@@ -78,7 +78,14 @@ export function WorkspaceRootItem({ root, homeDir, onRemoveRoot }: WorkspaceRoot
           }
         }}
       >
-        <FolderIcon className={styles.folderIcon} />
+        {/* The selected workspace is the one the Content column is showing,
+            so its folder reads as open — the only state cue besides the
+            row's own background. */}
+        {isSelected ? (
+          <FolderOpenIcon className={styles.folderIcon} />
+        ) : (
+          <FolderIcon className={styles.folderIcon} />
+        )}
         <div className={styles.labelColumn}>
           {isRenaming ? (
             <InlineRenameInput

@@ -12,7 +12,7 @@ import { useWorkspaceStore } from "@/stores/workspace";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { useExport } from "@/hooks/useExport";
 import { useListKeyboardNav } from "@/hooks/useListKeyboardNav";
-import { buildCommands, buildResultGroups, parentDirOf, type FolderResult, type FileResult, type PaletteResult } from "./commandPalette.logic";
+import { buildCommands, buildResultGroups, type FolderResult, type FileResult, type PaletteResult } from "./commandPalette.logic";
 import { CommandPaletteResults } from "./CommandPaletteResults";
 import styles from "./CommandPalette.module.css";
 
@@ -148,9 +148,12 @@ export function CommandPalette() {
       selectFolder(item.path);
       close();
     } else {
-      const parentDir = parentDirOf(item.path);
+      // Root the Content tree at the file's WORKSPACE, not at its immediate
+      // parent directory: the tree then reveals the file in place (see
+      // FileTree's reveal effect) instead of re-rooting onto a subfolder,
+      // which also left the Workspaces column with nothing selected.
       // selectFolder clears the file selection, so it must run first.
-      selectFolder(parentDir);
+      selectFolder(item.rootPath);
       selectFile(item.path);
       close();
     }

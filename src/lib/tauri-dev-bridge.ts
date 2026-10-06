@@ -39,6 +39,10 @@ export function installTauriDevBridgeIfNeeded() {
   };
 
   (window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = {
+    // getCurrentWindow() (used by useWindowTitle) reads the label straight off
+    // this metadata rather than going through invoke, and throws without it —
+    // which would take the whole App render down in a browser tab.
+    metadata: { currentWindow: { label: "main" } },
     transformCallback: (callback: EventCallback["handler"]) => {
       const id = nextCallbackId++;
       callbacks.set(id, { event: "", handler: callback });
@@ -49,6 +53,13 @@ export function installTauriDevBridgeIfNeeded() {
       // Tests drive this by setting window.__DEV_PICK_FOLDER__ beforehand.
       if (cmd === "plugin:dialog|open") {
         return (window as unknown as { __DEV_PICK_FOLDER__?: string }).__DEV_PICK_FOLDER__ ?? null;
+      }
+
+      // No native window to retitle in a browser tab; the document title is
+      // the closest equivalent and keeps the call from rejecting.
+      if (cmd === "plugin:window|set_title") {
+        document.title = String(args?.title ?? "");
+        return null;
       }
 
       if (cmd === "plugin:event|listen") {

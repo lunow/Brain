@@ -34,6 +34,63 @@
   line-height: var(--leading-tight);
 }
 
+/* Blank-line spacing between blocks — see collectBlankLineDecorations in
+   extensions/livePreview.ts for which line gets which class.
+
+   An empty line is normally a full line of prose tall (--leading-body),
+   which is far more air than paragraph spacing wants. Tight is the gap
+   inside a run of paragraphs; loose closes off the last paragraph before
+   a heading, a list, or the end of the document. Both are rem-based so
+   they track the app's font-scale, and both stay tall enough to host a
+   caret comfortably, since these lines are real editable positions.
+
+   .cm-content is for specificity, as with the heading rules below. */
+.cm-content .cm-mkBlankTight {
+  line-height: 1.125rem;
+}
+
+.cm-content .cm-mkBlankLoose {
+  line-height: 1.625rem;
+}
+
+/* Law of proximity: a heading belongs to the text BELOW it, so the space
+   above has to be the larger of the two — otherwise the heading floats
+   equidistant between two blocks and reads as belonging to neither.
+
+   In this editor the document stays plain markdown, so the gap on each
+   side of a heading is a real blank source line (one body line-height,
+   identical above and below). Padding on the heading's own line is what
+   tips the balance: it only ever adds to the space above, so the ratio is
+   blank-line + padding above against blank-line alone below.
+
+   Scaled by level — an h1 wants a bigger run-up than an h4 — and in rem so
+   it tracks the app's font-scale setting (Cmd +/-) like everything else.
+
+   .cm-content is here only to win specificity: the theme in
+   extensions/theme.ts sets `.cm-line { padding: 0 }`, which CodeMirror
+   emits as a two-class selector. */
+.cm-content .cm-mkHeadingLine1 {
+  padding-top: 2rem;
+}
+.cm-content .cm-mkHeadingLine2 {
+  padding-top: 1.5rem;
+}
+.cm-content .cm-mkHeadingLine3 {
+  padding-top: 1.125rem;
+}
+.cm-content .cm-mkHeadingLine4,
+.cm-content .cm-mkHeadingLine5,
+.cm-content .cm-mkHeadingLine6 {
+  padding-top: 0.75rem;
+}
+
+/* A document that opens on a heading has no preceding block to separate
+   it from, and the run-up would just push the first line off the top of
+   the page. */
+.cm-content > .cm-mkHeadingLine:first-child {
+  padding-top: 0;
+}
+
 .cm-mkEm {
   font-style: italic;
 }
@@ -158,15 +215,23 @@
   /* Shrinks to the table's own content width (matching .cm-mkTable below) —
      the background shouldn't paint wider than the table sitting inside it.
      max-width breaks out of the prose measure (Narrow/Width/Full) up to the
-     full editor pane, independent of the width preset — .scrollArea is the
-     inline-size containment context this percentage is relative to — so a
-     genuinely wide table still gets the full pane to lay out in before
+     editor pane's right edge, independent of the width preset, so a
+     genuinely wide table still gets the room to lay out before
      .cm-mkTable's own overflow kicks in and this scrolls horizontally.
-     Left edge stays where it naturally sits, aligned with the text (inset
-     by .widthContainer's padding); only the available width toward the
-     right is extended. */
+     Left edge stays where it naturally sits, aligned with the text; only
+     the available width toward the right is extended.
+
+     The page is centered in the pane (.widthContainer), so the room to the
+     right is NOT the whole pane minus the padding — half the leftover
+     canvas sits on the left. With `100cqw` the pane (.scrollArea is the
+     inline-size containment context) and `100%` the page's content width:
+       left canvas  = (100cqw - 100% - 2 * padding) / 2
+       text starts  = left canvas + padding
+       room to right = 100cqw - text start = (100cqw + 100%) / 2
+     which is never narrower than the measure itself, since the pane is
+     never narrower than the page. */
   width: max-content;
-  max-width: calc(100cqw - 2 * var(--page-padding));
+  max-width: calc((100cqw + 100%) / 2);
   box-sizing: border-box;
   margin: 1em 0;
   overflow-x: auto;

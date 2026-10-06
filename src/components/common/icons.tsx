@@ -58,6 +58,116 @@ export function FolderOpenIcon({ className }: { className?: string }) {
   );
 }
 
+/** Document glyph for file rows in the Content tree. Drawn in the same 13px
+ *  box as {@link FolderIcon}, with a matching 1.1 stroke and 0.15 fill, so
+ *  files and folders read as one icon set down the column. */
+export function FileIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.5 2.5C3.5 1.94772 3.94772 1.5 4.5 1.5H9.08579C9.35101 1.5 9.60536 1.60536 9.79289 1.79289L12.2071 4.20711C12.3946 4.39464 12.5 4.64899 12.5 4.91421V13.5C12.5 14.0523 12.0523 14.5 11.5 14.5H4.5C3.94772 14.5 3.5 14.0523 3.5 13.5V2.5Z"
+        fill="currentColor"
+        fillOpacity="0.15"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.25 1.75V4.25C9.25 4.52614 9.47386 4.75 9.75 4.75H12.25"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Disclosure chevron for Content-tree folder rows. Points right when
+ *  collapsed and is rotated 90deg by CSS when open, rather than swapping to a
+ *  second down-pointing glyph, so the transition can animate. */
+export function ChevronRightIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="10"
+      height="10"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M6 3.5 10.5 8 6 12.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Content-header action: a new markdown file in the current workspace root.
+ *  Shares {@link FileIcon}'s outline so the button reads as "one of these",
+ *  with the fold corner traded for a plus. */
+export function NewFileIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M3.5 2.5C3.5 1.94772 3.94772 1.5 4.5 1.5H9.08579C9.35101 1.5 9.60536 1.60536 9.79289 1.79289L12.2071 4.20711C12.3946 4.39464 12.5 4.64899 12.5 4.91421V13.5C12.5 14.0523 12.0523 14.5 11.5 14.5H4.5C3.94772 14.5 3.5 14.0523 3.5 13.5V2.5Z"
+        fill="currentColor"
+        fillOpacity="0.15"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+      <path d="M8 7.4v4M6 9.4h4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Content-header action: a new subfolder in the current workspace root.
+ *  {@link FolderIcon} with a plus on the body. */
+export function NewFolderIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M1.5 3.5C1.5 2.94772 1.94772 2.5 2.5 2.5H6.17157C6.43679 2.5 6.69114 2.60536 6.87868 2.79289L7.79289 3.70711C7.98043 3.89464 8.23478 4 8.5 4H13.5C14.0523 4 14.5 4.44772 14.5 5V12C14.5 12.5523 14.0523 13 13.5 13H2.5C1.94772 13 1.5 12.5523 1.5 12V3.5Z"
+        fill="currentColor"
+        fillOpacity="0.15"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+      <path d="M8 6.6v4.2M5.9 8.7h4.2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /** Opens the Settings panel from the Ideate/Review sidebar headers. */
 export function GearIcon({ className }: { className?: string }) {
   return (
@@ -247,40 +357,6 @@ export function ExportIcon({ className }: { className?: string }) {
         strokeWidth="1.1"
         strokeLinecap="round"
       />
-    </svg>
-  );
-}
-
-/** Folder-within-a-folder glyph for the "include subfolders" toggle —
- *  reuses {@link FolderIcon}'s path twice at different scale so nesting
- *  reads at a glance. */
-export function SubfoldersIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="13"
-      height="13"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M1.5 3.5C1.5 2.94772 1.94772 2.5 2.5 2.5H6.17157C6.43679 2.5 6.69114 2.60536 6.87868 2.79289L7.79289 3.70711C7.98043 3.89464 8.23478 4 8.5 4H13.5C14.0523 4 14.5 4.44772 14.5 5V12C14.5 12.5523 14.0523 13 13.5 13H2.5C1.94772 13 1.5 12.5523 1.5 12V3.5Z"
-        fill="currentColor"
-        fillOpacity="0.1"
-        stroke="currentColor"
-        strokeWidth="1"
-      />
-      <g transform="translate(4.4 4.6) scale(0.6)">
-        <path
-          d="M1.5 3.5C1.5 2.94772 1.94772 2.5 2.5 2.5H6.17157C6.43679 2.5 6.69114 2.60536 6.87868 2.79289L7.79289 3.70711C7.98043 3.89464 8.23478 4 8.5 4H13.5C14.0523 4 14.5 4.44772 14.5 5V12C14.5 12.5523 14.0523 13 13.5 13H2.5C1.94772 13 1.5 12.5523 1.5 12V3.5Z"
-          fill="currentColor"
-          fillOpacity="0.35"
-          stroke="currentColor"
-          strokeWidth="1.3"
-        />
-      </g>
     </svg>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCommands, buildResultGroups, parentDirOf, type CommandContext, type FileResult, type FolderResult } from "./commandPalette.logic";
+import { buildCommands, buildResultGroups, type CommandContext, type FileResult, type FolderResult } from "./commandPalette.logic";
 
 function ctx(overrides: Partial<CommandContext> = {}): CommandContext {
   return {
@@ -19,16 +19,6 @@ function ctx(overrides: Partial<CommandContext> = {}): CommandContext {
     ...overrides,
   };
 }
-
-describe("parentDirOf", () => {
-  it("returns the parent directory", () => {
-    expect(parentDirOf("/a/b/c.md")).toBe("/a/b");
-  });
-
-  it("returns the root path itself when there's no parent", () => {
-    expect(parentDirOf("/c.md")).toBe("/c.md");
-  });
-});
 
 describe("buildCommands", () => {
   it("labels toggle commands by current visibility", () => {

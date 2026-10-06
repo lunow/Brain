@@ -2,8 +2,11 @@
   display: flex;
   align-items: flex-start;
   width: 100%;
-  padding: 6px 8px;
-  gap: 6px;
+  /* Left inset matches --panel-pad-x so the folder icon sits on the same
+     column as the "Workspaces" header label; right inset leaves room for
+     the hover-revealed remove button. */
+  padding: var(--space-2) var(--space-6) var(--space-2) var(--panel-pad-x);
+  gap: 7px;
   text-align: left;
   font-size: 13px;
   color: var(--text-primary);
@@ -14,10 +17,11 @@
   background: var(--bg-hover);
 }
 
+/* No top/bottom hairlines: with the selected workspace already marked by
+   its open-folder icon and its background, the borders only added two more
+   horizontal rules to a column that reads better without them. */
 .rowSelected {
   background: var(--bg-active);
-  border-top: 1px solid var(--border-hairline);
-  border-bottom: 1px solid var(--border-hairline);
 }
 
 .rowDropTarget {
@@ -28,8 +32,14 @@
 
 .folderIcon {
   flex-shrink: 0;
-  margin-top: 1px;
+  /* Nudged down to sit optically centered on the name's cap height rather
+     than on its line box. */
+  margin-top: 2px;
   color: var(--text-tertiary);
+}
+
+.rowSelected .folderIcon {
+  color: var(--text-secondary);
 }
 
 .labelColumn {
@@ -39,25 +49,22 @@
 }
 
 .name {
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.path {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  margin-top: 1px;
-}
-
+.path,
 .stats {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--type-ui-micro);
+  line-height: 1.45;
   color: var(--text-tertiary);
+}
+
+.path {
   margin-top: 2px;
 }

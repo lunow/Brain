@@ -4,7 +4,9 @@
   height: var(--panel-header-height);
   box-sizing: border-box;
   flex-shrink: 0;
-  padding: 0 var(--space-4);
+  /* Same inset as the Workspaces and Content headers, so all three
+     header rows read as one band across the window. */
+  padding: 0 var(--panel-pad-x);
   border-bottom: 1px solid var(--border-hairline);
 }
 
