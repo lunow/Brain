@@ -35,14 +35,33 @@ keychain profile rather than `APPLE_ID`/`APPLE_PASSWORD`/`APPLE_TEAM_ID` env var
 
 ### Publishing a release
 
-Bump the version in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`
-together, then:
+Versions are a single counter, not semver: release N+1 follows release N. The three
+version fields store it as `N.0.0` because the tooling demands three components, but the
+release itself is "Version N" everywhere a human reads it — changelog heading, tag,
+release title, download link. See the preamble in `CHANGELOG.md`.
+
+So for Version 5: the version fields say `5.0.0`, the bundle is built as
+`Brain_5.0.0_universal.dmg`, and the tag is `v5`.
+
+Tags are `vN` — `v2`, `v3`, `v4`, `v5`. (`v1.0.0` is the lone exception, from before the
+convention settled; don't copy it.)
+
+1. Add the entry to `CHANGELOG.md` under a `## Version N` heading, newest first.
+2. Bump `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml` together.
+   `src-tauri/Cargo.lock` picks the new version up on the next cargo run — commit it too.
+3. Point the download link in `README.md` at the new asset URL (both the `vN` path segment
+   and the `N.0.0` filename change).
+4. Build, notarize and staple per the steps above.
+5. Commit, then:
 
 ```bash
-git tag -a vX.Y.Z -m "Brain vX.Y.Z"
-git push origin vX.Y.Z
-gh release create vX.Y.Z "path/to/Brain_X.Y.Z_universal.dmg#Brain.app installer (macOS, Apple Silicon + Intel)" \
-  --title "Brain vX.Y.Z" --notes "..."
+git tag -a v5 -m "Brain v5"
+git push origin main
+git push origin v5
+gh release create v5 \
+  "src-tauri/target/universal-apple-darwin/release/bundle/dmg/Brain_5.0.0_universal.dmg#Brain.app installer (macOS, Apple Silicon + Intel)" \
+  --title "Brain v5" --notes "..."
 ```
 
-Update the download link in `README.md` to point at the new asset URL.
+Stop any running `pnpm tauri dev` before the release build — it holds the cargo target
+directory and rebuilds on every file change, so the two fight over the lock.
