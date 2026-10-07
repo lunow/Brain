@@ -62,15 +62,6 @@
   padding: var(--space-2) 0 var(--space-5);
 }
 
-.subheader {
-  padding: var(--space-3) var(--panel-pad-x) var(--space-1);
-  font-size: var(--type-ui-micro);
-  color: var(--text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .rootItem {
   position: relative;
 }

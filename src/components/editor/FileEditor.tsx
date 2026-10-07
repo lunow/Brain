@@ -278,6 +278,10 @@ export function FileEditor() {
             <div
               className={`${styles.widthContainer} prose`}
               data-width={widthPreset}
+              // Distinct from data-centered below, which is false both when
+              // we're not in fullscreen AND in fullscreen on the Full
+              // preset — the two want different vertical margins.
+              data-fullscreen={fullscreenActive}
               data-centered={fullscreenActive && widthPreset !== "full"}
             >
               <MarkdownEditor

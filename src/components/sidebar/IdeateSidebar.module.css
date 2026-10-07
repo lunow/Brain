@@ -91,8 +91,20 @@
 
 .message[data-role="assistant"] {
   align-self: flex-start;
+  /* Wider than a user turn: these carry headings, lists and code, and 90%
+     of a narrow sidebar leaves them cramped. */
+  max-width: 100%;
   background: var(--bg-hover);
   color: var(--text-primary);
+  /* Markdown blocks supply their own spacing. Leaving pre-wrap on would
+     also honour every newline in the source, doubling every gap. */
+  white-space: normal;
+}
+
+/* Until the first token lands the bubble is still plain text ("…"), so it
+   keeps the pre-wrap behaviour of a user turn. */
+.message[data-role="assistant"][data-empty="true"] {
+  white-space: pre-wrap;
 }
 
 .message[data-empty="true"] {

@@ -49,8 +49,12 @@
      the leftover canvas got big enough that parking all of it on one side
      read as a layout error; split in two it reads as a margin. The page
      no longer shares a left edge with the Content column, which is the
-     trade — but the columns have their own hairline to align against. */
-  margin: 0 auto;
+     trade — but the columns have their own hairline to align against.
+
+     The vertical margin is what makes it read as a page rather than as the
+     pane's own background: without it the sheet starts flush under the
+     toolbar and runs off the bottom with no edge anywhere. */
+  margin: var(--page-margin-y) auto;
   padding: var(--page-padding-y) var(--page-padding-x);
   background: var(--bg-panel);
   /* Always reads as a full sheet of paper — short documents shouldn't
@@ -59,6 +63,16 @@
      padding and 100% lands the whole box at the height of .scrollArea;
      subtracting the padding here (as this did) left a short document
      ending 2 x --page-padding-y above the bottom of the pane. */
+  min-height: calc(100% - 2 * var(--page-margin-y));
+}
+
+/* Fullscreen is the one place the page goes flush: the toolbar and side
+   columns are gone, so there's nothing left to sit apart from. Narrow and
+   Width get their own, larger margin back via [data-centered] below; Full
+   keeps none, since it has no width cap either. Both selectors weigh the
+   same, so [data-centered] must stay after this to win. */
+.widthContainer[data-fullscreen="true"] {
+  margin: 0 auto;
   min-height: 100%;
 }
 

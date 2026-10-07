@@ -30,3 +30,6 @@ dist-ssr
 
 # Local test content
 /test-vault
+# Fictional datasets used only for README screenshots (see scripts/seed-demo-workspaces.mjs)
+/demo-vault
+/demo-workspaces

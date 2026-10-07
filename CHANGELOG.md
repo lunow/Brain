@@ -5,6 +5,32 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 6
+
+**Ideate**
+
+- The research agent's answers now render as markdown instead of raw text —
+  headings, lists, tables, task lists, code blocks, quotes and links all
+  come out formatted. Links open in your browser; images are never fetched,
+  so the alt text stands in for them. Your own messages stay exactly as you
+  typed them.
+
+**Layout**
+
+- The page has breathing room above and below it in the normal view, so it
+  reads as a sheet sitting on a surface rather than starting flush under
+  the toolbar. Fullscreen is unchanged.
+- The Workspaces column no longer prints the shared parent folder as a
+  heading above a group of workspaces. The ordering is the same; the path
+  is just not shown.
+
+**Development**
+
+- `pnpm demo` launches the app against a set of fictional demo workspaces
+  for screenshots, leaving your real workspace list untouched. It works
+  through `BRAIN_WORKSPACE_STORE`, which points the app at a different
+  workspace file inside its own data directory.
+
 ## Version 5
 
 A redesign of the three-column layout, and a new typeface for the writing

@@ -8,6 +8,24 @@ use tauri_plugin_store::StoreExt;
 const STORE_FILE: &str = "workspace.json";
 const ROOTS_KEY: &str = "roots";
 
+/// Which file inside the app-data directory the workspace roots live in.
+///
+/// `BRAIN_WORKSPACE_STORE` swaps it for a different one, so a demo or
+/// screenshot session can run against a staged list of roots while the real
+/// `workspace.json` sits untouched beside it. Adding, renaming and removing
+/// roots all go to whichever file is selected, so the demo list is editable
+/// in the usual way and still cannot write over the real one.
+///
+/// The value is a bare filename: anything containing a path separator is
+/// ignored, which keeps this from being a way to write outside the app's
+/// own data directory.
+fn store_file() -> String {
+    std::env::var("BRAIN_WORKSPACE_STORE")
+        .ok()
+        .filter(|name| !name.is_empty() && !name.contains('/') && !name.contains('\\'))
+        .unwrap_or_else(|| STORE_FILE.to_string())
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RootFolder {
@@ -18,7 +36,7 @@ pub struct RootFolder {
 }
 
 fn read_roots(app: &AppHandle) -> Result<Vec<RootFolder>, String> {
-    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
+    let store = app.store(store_file()).map_err(|e| e.to_string())?;
     Ok(store
         .get(ROOTS_KEY)
         .and_then(|v| serde_json::from_value(v).ok())
@@ -26,7 +44,7 @@ fn read_roots(app: &AppHandle) -> Result<Vec<RootFolder>, String> {
 }
 
 fn write_roots(app: &AppHandle, roots: &[RootFolder]) -> Result<(), String> {
-    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
+    let store = app.store(store_file()).map_err(|e| e.to_string())?;
     store.set(
         ROOTS_KEY,
         serde_json::to_value(roots).map_err(|e| e.to_string())?,
@@ -117,4 +135,28 @@ pub fn remove_root_folder(
     write_roots(&app, &roots)?;
     watcher::unwatch_root(&registry, &id);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// These mutate a process-wide env var, so they share one test to stay
+    /// deterministic under the parallel test runner.
+    #[test]
+    fn store_file_honors_the_override_but_only_for_bare_filenames() {
+        std::env::remove_var("BRAIN_WORKSPACE_STORE");
+        assert_eq!(store_file(), "workspace.json");
+
+        std::env::set_var("BRAIN_WORKSPACE_STORE", "workspace.demo.json");
+        assert_eq!(store_file(), "workspace.demo.json");
+
+        // Anything that could escape the app-data directory falls back.
+        for bad in ["", "../workspace.json", "/etc/passwd", "sub/dir.json", "a\\b.json"] {
+            std::env::set_var("BRAIN_WORKSPACE_STORE", bad);
+            assert_eq!(store_file(), "workspace.json", "should have rejected {bad:?}");
+        }
+
+        std::env::remove_var("BRAIN_WORKSPACE_STORE");
+    }
 }

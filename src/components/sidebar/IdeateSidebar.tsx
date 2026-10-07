@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUiStore } from "@/stores/ui";
 import { useIdeateChat } from "@/hooks/useIdeateChat";
 import { GearIcon } from "@/components/common/icons";
+import { MarkdownMessage } from "./MarkdownMessage";
 import styles from "./IdeateSidebar.module.css";
 
 export function IdeateSidebar() {
@@ -59,7 +60,14 @@ export function IdeateSidebar() {
             )}
             {messages.map((m, i) => (
               <div key={i} className={styles.message} data-role={m.role} data-empty={m.content === ""}>
-                {m.content || (m.role === "assistant" && sending ? "…" : "")}
+                {/* Only the agent's side is markdown. A user's turn is the
+                    literal text they typed — rendering it would eat their
+                    asterisks and underscores. */}
+                {m.role === "assistant" && m.content ? (
+                  <MarkdownMessage content={m.content} />
+                ) : (
+                  m.content || (m.role === "assistant" && sending ? "…" : "")
+                )}
               </div>
             ))}
           </div>

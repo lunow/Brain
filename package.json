@@ -1,14 +1,16 @@
 {
   "name": "brain",
   "private": true,
-  "version": "5.0.0",
+  "version": "6.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "demo": "node scripts/seed-demo-workspaces.mjs && BRAIN_WORKSPACE_STORE=workspace.demo.json pnpm tauri dev",
+    "demo:seed": "node scripts/seed-demo-workspaces.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",

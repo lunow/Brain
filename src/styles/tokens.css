@@ -70,6 +70,11 @@
   --page-padding-x: 48px;
   --page-padding-y: 36px;
 
+  /* Canvas above and below the page in the normal (non-fullscreen) view,
+     so the sheet reads as a page sitting on a surface rather than as the
+     pane's own background starting under the toolbar. */
+  --page-margin-y: 32px;
+
   /* Breathing room around the centered page in fullscreen (Narrow/Width
      only — Full has no cap, so there's no space to add it around). */
   --fullscreen-margin: 40px;
