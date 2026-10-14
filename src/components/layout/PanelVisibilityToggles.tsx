@@ -1,4 +1,4 @@
-import { useUiStore } from "@/stores/ui";
+import { useUiStore, hasRightSidebar } from "@/stores/ui";
 import { ToggleFoldersIcon, ToggleFilesIcon, ToggleSidebarIcon, FullscreenIcon } from "@/components/common/icons";
 import styles from "./PanelVisibilityToggles.module.css";
 
@@ -38,7 +38,7 @@ export function PanelVisibilityToggles() {
       >
         <ToggleFilesIcon />
       </button>
-      {writingMode !== "write" && (
+      {hasRightSidebar(writingMode) && (
         <button
           type="button"
           className={styles.toggle}

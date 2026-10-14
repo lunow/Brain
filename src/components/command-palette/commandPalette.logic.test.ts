@@ -83,18 +83,22 @@ describe("buildResultGroups", () => {
     expect(idsFor("/root/a.md")).toContain("rename-file");
   });
 
-  it("hides toggle-sidebar in write mode", () => {
-    const groups = buildResultGroups({
-      query: "sidebar",
-      commands: buildCommands(ctx()),
-      navIndex: undefined,
-      selectedFolderPath: null,
-      selectedFilePath: null,
-      writingMode: "write",
-      treeVisible: true,
-      fileListVisible: true,
-    });
-    expect(groups.find((g) => g.label === "View")).toBeUndefined();
+  it("hides toggle-sidebar in the modes with no right sidebar", () => {
+    const sidebarGroups = (writingMode: "ideate" | "explore" | "write" | "review") =>
+      buildResultGroups({
+        query: "sidebar",
+        commands: buildCommands(ctx()),
+        navIndex: undefined,
+        selectedFolderPath: null,
+        selectedFilePath: null,
+        writingMode,
+        treeVisible: true,
+        fileListVisible: true,
+      });
+    expect(sidebarGroups("write").find((g) => g.label === "View")).toBeUndefined();
+    expect(sidebarGroups("explore").find((g) => g.label === "View")).toBeUndefined();
+    expect(sidebarGroups("ideate").find((g) => g.label === "View")).toBeDefined();
+    expect(sidebarGroups("review").find((g) => g.label === "View")).toBeDefined();
   });
 
   it("shows only root folders when the query is empty", () => {

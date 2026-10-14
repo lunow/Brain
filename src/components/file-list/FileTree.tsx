@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, type CSSProperties } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import {
@@ -98,13 +107,63 @@ function handleVerticalNav(e: React.KeyboardEvent<HTMLElement>): boolean {
   return true;
 }
 
+
+/**
+ * The file operations a tree row needs, provided once by FileTree.
+ *
+ * Each row used to call useFileOperations() itself, which builds six
+ * useMutation hooks — several thousand hook instances across a deep tree,
+ * for five callbacks that are identical everywhere. The context value is
+ * memoized on React Query's stable `mutate` references, so it never changes
+ * identity and consuming it costs a row nothing.
+ */
+interface TreeOps {
+  createFile: (parentDir: string) => void;
+  createFolder: (parentDir: string) => void;
+  rename: (path: string, newName: string) => void;
+  remove: (path: string) => void;
+  duplicate: (path: string) => void;
+}
+
+const TreeOpsContext = createContext<TreeOps | null>(null);
+
+function useTreeOps(): TreeOps {
+  const ops = useContext(TreeOpsContext);
+  if (!ops) throw new Error("Tree rows must be rendered inside <FileTree>");
+  return ops;
+}
+
+function TreeOpsProvider({ children }: { children: ReactNode }) {
+  const { createFileMutation, createFolderMutation, renameMutation, deleteMutation, duplicateMutation } =
+    useFileOperations();
+
+  const value = useMemo<TreeOps>(
+    () => ({
+      createFile: (parentDir) => createFileMutation.mutate(parentDir),
+      createFolder: (parentDir) => createFolderMutation.mutate(parentDir),
+      rename: (path, newName) => renameMutation.mutate({ path, newName }),
+      remove: (path) => deleteMutation.mutate(path),
+      duplicate: (path) => duplicateMutation.mutate(path),
+    }),
+    [
+      createFileMutation.mutate,
+      createFolderMutation.mutate,
+      renameMutation.mutate,
+      deleteMutation.mutate,
+      duplicateMutation.mutate,
+    ],
+  );
+
+  return <TreeOpsContext.Provider value={value}>{children}</TreeOpsContext.Provider>;
+}
+
 function TreeFileRow({ file, depth }: { file: MarkdownFileEntry; depth: number }) {
   const isSelected = useWorkspaceStore((s) => s.selectedFilePath === file.path);
   const selectFile = useWorkspaceStore((s) => s.selectFile);
   const isRenaming = useWorkspaceStore((s) => s.renamingPath === file.path);
   const startRename = useWorkspaceStore((s) => s.startRename);
   const stopRename = useWorkspaceStore((s) => s.stopRename);
-  const { renameMutation, deleteMutation, duplicateMutation } = useFileOperations();
+  const ops = useTreeOps();
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `drag:${file.path}`,
@@ -131,10 +190,10 @@ function TreeFileRow({ file, depth }: { file: MarkdownFileEntry; depth: number }
 
   const menuItems: ContextMenuEntry[] = [
     { label: "Rename", onSelect: () => startRename(file.path) },
-    { label: "Duplicate", onSelect: () => duplicateMutation.mutate(file.path) },
+    { label: "Duplicate", onSelect: () => ops.duplicate(file.path) },
     { label: "Reveal in Finder", onSelect: () => revealInFinder(file.path) },
     "separator",
-    { label: "Delete", onSelect: () => deleteMutation.mutate(file.path) },
+    { label: "Delete", onSelect: () => ops.remove(file.path) },
   ];
 
   return (
@@ -172,7 +231,7 @@ function TreeFileRow({ file, depth }: { file: MarkdownFileEntry; depth: number }
             startRename(file.path);
           } else if ((e.key === "Delete" || e.key === "Backspace") && isSelected) {
             e.preventDefault();
-            deleteMutation.mutate(file.path);
+            ops.remove(file.path);
           }
         }}
       >
@@ -181,7 +240,7 @@ function TreeFileRow({ file, depth }: { file: MarkdownFileEntry; depth: number }
         {isRenaming ? (
           <InlineRenameInput
             initialName={file.name}
-            onCommit={(newName) => renameMutation.mutate({ path: file.path, newName })}
+            onCommit={(newName) => ops.rename(file.path, newName)}
             onCancel={stopRename}
           />
         ) : (
@@ -200,7 +259,7 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
   const isRenaming = useWorkspaceStore((s) => s.renamingPath === path);
   const startRename = useWorkspaceStore((s) => s.startRename);
   const stopRename = useWorkspaceStore((s) => s.stopRename);
-  const { createFileMutation, createFolderMutation, renameMutation, deleteMutation } = useFileOperations();
+  const ops = useTreeOps();
 
   // Both children queries stay disabled until the folder is open, so the
   // tree only ever reads the directories the user actually unfolded.
@@ -212,7 +271,11 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
   });
   const { data: files } = useQuery({
     queryKey: ["markdownFiles", path, false],
-    queryFn: () => listMarkdownFiles(path, false),
+    // includePreview: false. Nothing renders MarkdownFileEntry.preview any
+    // more, and building it costs a full fs::read_to_string of every file in
+    // the folder — repaid on every autosave and every fs-watcher event,
+    // which invalidate ["markdownFiles"] wholesale.
+    queryFn: () => listMarkdownFiles(path, false, false),
     enabled: isExpanded,
   });
 
@@ -231,26 +294,32 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
     isDragging,
   } = useDraggable({ id: `drag:${path}`, data: { kind: "folder", path } });
 
+  // Memoized for the same reason FileTree memoizes its own: these re-sort
+  // through an Intl.Collator, and a folder row re-renders whenever its own
+  // selection or expand state changes.
+  const sortedChildren = useMemo(() => byName(children), [children]);
+  const sortedFiles = useMemo(() => byName(files), [files]);
+
   const menuItems: ContextMenuEntry[] = [
     {
       label: "New File",
       onSelect: () => {
         expandPath(path);
-        createFileMutation.mutate(path);
+        ops.createFile(path);
       },
     },
     {
       label: "New Folder",
       onSelect: () => {
         expandPath(path);
-        createFolderMutation.mutate(path);
+        ops.createFolder(path);
       },
     },
     "separator",
     { label: "Rename", onSelect: () => startRename(path) },
     { label: "Reveal in Finder", onSelect: () => revealInFinder(path) },
     "separator",
-    { label: "Delete", onSelect: () => deleteMutation.mutate(path) },
+    { label: "Delete", onSelect: () => ops.remove(path) },
   ];
 
   return (
@@ -295,10 +364,14 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
               } else if (e.key === "F2") {
                 e.preventDefault();
                 startRename(path);
-              } else if (e.key === "Delete" || e.key === "Backspace") {
-                e.preventDefault();
-                deleteMutation.mutate(path);
               }
+              // Deliberately no Delete/Backspace binding. Arrow navigation
+              // moves focus without changing the selection, so a keyboard
+              // delete here would recursively trash whichever folder the
+              // cursor happened to land on — something the user never
+              // selected. A file row can guard on isSelected (the file is
+              // open in the editor); a folder has no equivalent state, so
+              // deleting one goes through the context menu only.
             }}
           >
             <button
@@ -320,7 +393,7 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
             {isRenaming ? (
               <InlineRenameInput
                 initialName={name}
-                onCommit={(newName) => renameMutation.mutate({ path, newName })}
+                onCommit={(newName) => ops.rename(path, newName)}
                 onCancel={stopRename}
               />
             ) : (
@@ -332,10 +405,10 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
 
       {isExpanded && (
         <div className={styles.children} style={depthVar(depth)}>
-          {byName(children).map((f) => (
+          {sortedChildren.map((f) => (
             <TreeFolderRow key={f.path} path={f.path} name={f.name} depth={depth + 1} />
           ))}
-          {byName(files).map((file) => (
+          {sortedFiles.map((file) => (
             <TreeFileRow key={file.path} file={file} depth={depth + 1} />
           ))}
         </div>
@@ -350,7 +423,15 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
  * stores no ordering of its own, so this is the only order there is.
  */
 export function FileTree({ rootPath }: { rootPath: string }) {
-  const { createFileMutation, createFolderMutation } = useFileOperations();
+  return (
+    <TreeOpsProvider>
+      <FileTreeBody rootPath={rootPath} />
+    </TreeOpsProvider>
+  );
+}
+
+function FileTreeBody({ rootPath }: { rootPath: string }) {
+  const rootOps = useTreeOps();
   const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
   const expandFileTreePaths = useWorkspaceStore((s) => s.expandFileTreePaths);
 
@@ -379,7 +460,7 @@ export function FileTree({ rootPath }: { rootPath: string }) {
   });
   const { data: files } = useQuery({
     queryKey: ["markdownFiles", rootPath, false],
-    queryFn: () => listMarkdownFiles(rootPath, false),
+    queryFn: () => listMarkdownFiles(rootPath, false, false),
   });
 
   // Dropping onto the tree's own background moves an entry back up to the
@@ -394,8 +475,8 @@ export function FileTree({ rootPath }: { rootPath: string }) {
   const sortedFiles: MarkdownFileEntry[] = useMemo(() => byName(files), [files]);
 
   const menuItems: ContextMenuEntry[] = [
-    { label: "New File", onSelect: () => createFileMutation.mutate(rootPath) },
-    { label: "New Folder", onSelect: () => createFolderMutation.mutate(rootPath) },
+    { label: "New File", onSelect: () => rootOps.createFile(rootPath) },
+    { label: "New Folder", onSelect: () => rootOps.createFolder(rootPath) },
     "separator",
     { label: "Reveal in Finder", onSelect: () => revealInFinder(rootPath) },
   ];

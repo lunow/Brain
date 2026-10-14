@@ -14,8 +14,12 @@ function parentDirOf(path: string): string {
  */
 export function useFileOperations() {
   const queryClient = useQueryClient();
-  const selectedFolderPath = useWorkspaceStore((s) => s.selectedFolderPath);
-  const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
+  // Selection is read imperatively inside the callbacks rather than
+  // subscribed to. Every row of the Content tree calls this hook, so
+  // subscribing to selectedFilePath/selectedFolderPath re-rendered the whole
+  // tree on every file selection — a few hundred rows per click, purely so
+  // that a mutation's onSuccess could compare against the current selection.
+  // The store actions below are stable references and are safe to subscribe.
   const selectFolder = useWorkspaceStore((s) => s.selectFolder);
   const selectFile = useWorkspaceStore((s) => s.selectFile);
   const stopRename = useWorkspaceStore((s) => s.stopRename);
@@ -42,6 +46,7 @@ export function useFileOperations() {
     mutationFn: ({ path, newName }: { path: string; newName: string }) => renameEntry(path, newName),
     onSuccess: (newPath, { path }) => {
       invalidateDir(parentDirOf(path));
+      const { selectedFilePath, selectedFolderPath } = useWorkspaceStore.getState();
       if (selectedFilePath === path) selectFile(newPath);
       if (selectedFolderPath === path) selectFolder(newPath);
       stopRename();
@@ -52,6 +57,7 @@ export function useFileOperations() {
     mutationFn: (path: string) => deleteEntry(path),
     onSuccess: (_result, path) => {
       invalidateDir(parentDirOf(path));
+      const { selectedFilePath, selectedFolderPath } = useWorkspaceStore.getState();
       if (selectedFilePath === path) selectFile(null);
       if (selectedFolderPath === path) selectFolder(null);
     },
@@ -62,7 +68,7 @@ export function useFileOperations() {
     onSuccess: (newPath, { srcPath, destDir }) => {
       invalidateDir(parentDirOf(srcPath));
       invalidateDir(destDir);
-      if (selectedFilePath === srcPath) selectFile(newPath);
+      if (useWorkspaceStore.getState().selectedFilePath === srcPath) selectFile(newPath);
     },
   });
 

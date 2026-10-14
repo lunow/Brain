@@ -88,6 +88,15 @@ interface PendingDecoration {
 }
 
 
+interface BlankLineRun {
+  /** Line numbers of the first and last blank line of the run, inclusive. */
+  from: number;
+  to: number;
+  /** The run is followed by a paragraph, so it separates two paragraphs of
+   *  one block of thought and gets the tighter gap. */
+  leadsIntoParagraph: boolean;
+}
+
 /**
  * Paragraph spacing: the blank lines BETWEEN blocks are never shown as
  * lines. Each one collapses to nothing, and the first of a run becomes a
@@ -102,40 +111,94 @@ interface PendingDecoration {
  * somewhere to see the caret. Only blank lines that actually separate
  * top-level blocks are touched; a blank line inside fenced code,
  * frontmatter, a table or a quote is real content and left alone.
+ *
+ * Runs of blank lines are handled as a unit. Looking ahead from every blank
+ * line individually made this quadratic in the length of a run: 2000
+ * consecutive blank lines (hold Enter, or padding at the end of a pasted
+ * file) cost ~164ms per rebuild, and this rebuilds on every keystroke and
+ * every cursor move. Skipping the loop past each run makes it linear, and
+ * resolving the block type once per run rather than once per line drops the
+ * tree lookups from one-per-blank-line to one-per-gap. A run cannot
+ * straddle a block boundary — the delimiter that would end a block is
+ * itself a non-blank line — so one lookup describes the whole run.
  */
-function collectBlankLineDecorations(state: EditorState): PendingDecoration[] {
-  const out: PendingDecoration[] = [];
+function collectBlankLineRuns(state: EditorState): BlankLineRun[] {
+  const runs: BlankLineRun[] = [];
   const lineCount = state.doc.lines;
   const isBlank = (n: number) => state.doc.line(n).text.trim().length === 0;
+
+  for (let i = 1; i <= lineCount; i++) {
+    if (!isBlank(i)) continue;
+
+    // Extent of this run of blank lines, and the block it sits in, found once.
+    let next = i + 1;
+    while (next <= lineCount && isBlank(next)) next++;
+
+    if (topLevelBlockAt(state, state.doc.line(i).from) === "Document") {
+      runs.push({
+        from: i,
+        to: next - 1,
+        leadsIntoParagraph:
+          next <= lineCount && topLevelBlockAt(state, state.doc.line(next).from) === "Paragraph",
+      });
+    }
+
+    i = next - 1; // the loop's own i++ lands on `next`
+  }
+
+  return runs;
+}
+
+function collectBlankLineDecorations(state: EditorState): PendingDecoration[] {
+  const out: PendingDecoration[] = [];
   const hasCaret = (n: number) => {
     const line = state.doc.line(n);
     return state.selection.ranges.some((r) => r.empty && r.head >= line.from && r.head <= line.to);
   };
 
-  for (let i = 1; i <= lineCount; i++) {
-    if (!isBlank(i) || hasCaret(i)) continue;
-    const line = state.doc.line(i);
-    if (topLevelBlockAt(state, line.from) !== "Document") continue;
+  for (const run of cachedBlankLineRuns(state)) {
+    for (let j = run.from; j <= run.to; j++) {
+      if (hasCaret(j)) continue;
+      const line = state.doc.line(j);
 
-    // The gap goes on the first blank line after text, or the first after
-    // the caret's own empty paragraph; the rest of the run adds nothing.
-    const startsGap = i === 1 || !isBlank(i - 1) || hasCaret(i - 1);
+      // The gap goes on the first blank line after text, or the first after
+      // the caret's own empty paragraph; the rest of the run adds nothing.
+      const startsGap = j === run.from || hasCaret(j - 1);
 
-    let next = i + 1;
-    while (next <= lineCount && isBlank(next)) next++;
-    const leadsIntoParagraph =
-      next <= lineCount && topLevelBlockAt(state, state.doc.line(next).from) === "Paragraph";
-
-    const gap = startsGap ? (leadsIntoParagraph ? " cm-mkGapTight" : " cm-mkGapLoose") : "";
-    out.push({
-      from: line.from,
-      to: line.from,
-      isLine: true,
-      deco: Decoration.line({ class: "cm-mkBlank" + gap }),
-    });
+      const gap = startsGap ? (run.leadsIntoParagraph ? " cm-mkGapTight" : " cm-mkGapLoose") : "";
+      out.push({
+        from: line.from,
+        to: line.from,
+        isLine: true,
+        deco: Decoration.line({ class: "cm-mkBlank" + gap }),
+      });
+    }
   }
 
   return out;
+}
+
+/**
+ * Last set of blank-line runs, keyed on the exact doc and tree it came from.
+ *
+ * buildDecorations re-runs on every transaction, selection-only ones
+ * included — so arrow keys and clicks rebuilt this even though the runs
+ * depend on neither. Both identities are unchanged by a selection move, so
+ * those transactions reuse the previous runs outright and only redo the
+ * cheap caret-dependent pass above (which blank line the caret is on
+ * decides which lines stay full-height and where the gap sits, so that part
+ * must not be cached).
+ */
+let blankLineCache: { doc: EditorState["doc"]; tree: unknown; runs: BlankLineRun[] } | null = null;
+
+function cachedBlankLineRuns(state: EditorState): BlankLineRun[] {
+  const tree = syntaxTree(state);
+  if (blankLineCache && blankLineCache.doc === state.doc && blankLineCache.tree === tree) {
+    return blankLineCache.runs;
+  }
+  const runs = collectBlankLineRuns(state);
+  blankLineCache = { doc: state.doc, tree, runs };
+  return runs;
 }
 
 function buildDecorations(state: EditorState): DecorationSet {

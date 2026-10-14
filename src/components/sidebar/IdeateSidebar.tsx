@@ -11,9 +11,46 @@ export function IdeateSidebar() {
   const [draft, setDraft] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Keeps the newest text in view, one scroll per frame.
+   *
+   * Driven by the DOM rather than by `messages`: MarkdownMessage commits
+   * streamed content on its own frame schedule (see useFrameCoalesced), so a
+   * scroll scheduled when `messages` changes measures the list before the
+   * taller content is there — and after the final token nothing schedules
+   * another one, which left the tail of an answer below the fold. The
+   * observer fires once React has committed, so the growth and the scroll
+   * that follows it can't get out of step.
+   *
+   * Still coalesced to a frame: reading scrollHeight forces a layout, and a
+   * streamed answer mutates this subtree continuously.
+   */
+  const scrollFrame = useRef<number | null>(null);
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [messages]);
+    const el = listRef.current;
+    if (!el) return;
+
+    const stick = () => {
+      if (scrollFrame.current !== null) return;
+      scrollFrame.current = requestAnimationFrame(() => {
+        scrollFrame.current = null;
+        el.scrollTo({ top: el.scrollHeight });
+      });
+    };
+
+    stick();
+    const observer = new MutationObserver(stick);
+    observer.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => {
+      observer.disconnect();
+      if (scrollFrame.current !== null) {
+        cancelAnimationFrame(scrollFrame.current);
+        scrollFrame.current = null;
+      }
+    };
+    // The list is only rendered once there's a file and a key, so the effect
+    // has to re-run when it mounts to find it.
+  }, [hasFile, hasApiKey]);
 
   function handleSend() {
     if (!draft.trim() || sending) return;

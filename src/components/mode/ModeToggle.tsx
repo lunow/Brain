@@ -3,8 +3,9 @@ import styles from "./ModeToggle.module.css";
 
 const OPTIONS: { key: WritingMode; label: string; hint: string }[] = [
   { key: "ideate", label: "Ideate", hint: "⌘1" },
-  { key: "write", label: "Write", hint: "⌘2" },
-  { key: "review", label: "Review", hint: "⌘3" },
+  { key: "explore", label: "Explore", hint: "⌘2" },
+  { key: "write", label: "Write", hint: "⌘3" },
+  { key: "review", label: "Review", hint: "⌘4" },
 ];
 
 export function ModeToggle() {

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listen } from "@tauri-apps/api/event";
 import { readFile, writeFile } from "@/lib/tauri-commands";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { useUiStore, RIGHT_SIDEBAR_WIDTH_MIN, RIGHT_SIDEBAR_WIDTH_MAX } from "@/stores/ui";
+import { useUiStore, hasRightSidebar, RIGHT_SIDEBAR_WIDTH_MIN, RIGHT_SIDEBAR_WIDTH_MAX } from "@/stores/ui";
 import { useReviewStore, EMPTY_SUGGESTIONS } from "@/stores/review";
 import { loadSavedReview } from "@/lib/reviewPersistence";
 import { locateSuggestions } from "@/lib/reviewSuggestions";
@@ -11,6 +11,7 @@ import { useExport } from "@/hooks/useExport";
 import { ModeToggle } from "@/components/mode/ModeToggle";
 import { IdeateSidebar } from "@/components/sidebar/IdeateSidebar";
 import { ReviewSidebar } from "@/components/sidebar/ReviewSidebar";
+import { GraphView } from "@/components/graph/GraphView";
 import { ColumnResizer } from "@/components/layout/ColumnResizer";
 import { PanelVisibilityToggles } from "@/components/layout/PanelVisibilityToggles";
 import { MarkdownEditor } from "./MarkdownEditor";
@@ -28,8 +29,10 @@ export function FileEditor() {
   const queryClient = useQueryClient();
   const { requestExport } = useExport();
 
-  const rightPanel: ReactNode =
-    writingMode === "ideate" ? <IdeateSidebar /> : writingMode === "review" ? <ReviewSidebar /> : null;
+  let rightPanel: ReactNode = null;
+  if (hasRightSidebar(writingMode)) {
+    rightPanel = writingMode === "ideate" ? <IdeateSidebar /> : <ReviewSidebar />;
+  }
 
   const rightSidebarWidth = useUiStore((s) => s.rightSidebarWidth);
   const setRightSidebarWidth = useUiStore((s) => s.setRightSidebarWidth);
@@ -81,6 +84,17 @@ export function FileEditor() {
   const pendingContent = useRef<string | null>(null);
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
+  // Mirrors the latest loaded content for the fs listener below. That
+  // listener deliberately doesn't re-subscribe when the content changes, so
+  // reading `initialContent` from its closure froze it at whatever was
+  // loaded when selectedFilePath last changed. After adopting an external
+  // change, the frozen value was the file's ORIGINAL text — so if the file
+  // was then reverted on disk (git checkout, undo in another editor), the
+  // revert compared equal to that stale value and was discarded, leaving
+  // the editor showing the superseded text and ready to save it back over
+  // the revert. A ref is read at call time and cannot go stale.
+  const initialContentRef = useRef(initialContent);
+  initialContentRef.current = initialContent;
   // Content of the last write this app made to selectedFilePath. The fs
   // watcher reports our own autosave writes as filesystem events (with a
   // ~400ms debounce delay), so relying on the `dirty` flag alone to decide
@@ -189,7 +203,7 @@ export function FileEditor() {
           return;
         }
 
-        const knownContent = pendingContent.current ?? initialContent;
+        const knownContent = pendingContent.current ?? initialContentRef.current;
         if (freshContent === knownContent || freshContent === undefined) return;
         pendingContent.current = null;
         setExternalReload((prev) => ({ text: freshContent, token: (prev?.token ?? 0) + 1 }));
@@ -201,7 +215,8 @@ export function FileEditor() {
       unlistenPromise.then((unlisten) => unlisten());
     };
     // initialContent intentionally omitted: it changes every reload and
-    // would otherwise force this listener to resubscribe each time.
+    // would otherwise force this listener to resubscribe each time. It is
+    // read through initialContentRef instead, which stays current.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilePath, queryClient]);
 
@@ -218,6 +233,24 @@ export function FileEditor() {
     const freshContent = queryClient.getQueryData<string>(["fileContent", selectedFilePath]);
     if (freshContent === undefined) return;
     setExternalReload((prev) => ({ text: freshContent, token: (prev?.token ?? 0) + 1 }));
+  }
+
+  // Explore mode takes over the pane, and unlike the others it works with no
+  // file open at all — so it returns ahead of the "select a file" and
+  // "loading" states below rather than through them. The toolbar stays so the
+  // mode toggle is still reachable; its width and export controls are
+  // meaningless here and go disabled.
+  if (writingMode === "explore") {
+    return (
+      <div className={styles.wrapper}>
+        {!fullscreenActive && (
+          <WidthToolbar dirty={dirty} onExport={handleExport} disabled leading={leading} center={center} />
+        )}
+        <div className={styles.body}>
+          <GraphView />
+        </div>
+      </div>
+    );
   }
 
   if (!selectedFilePath) {

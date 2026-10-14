@@ -2,7 +2,16 @@ import { create } from "zustand";
 import type { EditorView } from "@codemirror/view";
 
 export type WidthPreset = "narrow" | "normal" | "full";
-export type WritingMode = "ideate" | "write" | "review";
+export type WritingMode = "ideate" | "explore" | "write" | "review";
+
+/** Whether a mode has anything to put in the right sidebar. Write is just
+ *  the document, and Graph takes the whole pane — so both hide the sidebar
+ *  and its toggle. Read by FileEditor (what to render) and
+ *  PanelVisibilityToggles (whether to offer the toggle at all), which must
+ *  agree or the toggle controls nothing. */
+export function hasRightSidebar(mode: WritingMode): boolean {
+  return mode === "ideate" || mode === "review";
+}
 
 const FONT_SCALE_MIN = 0.8;
 const FONT_SCALE_MAX = 1.6;

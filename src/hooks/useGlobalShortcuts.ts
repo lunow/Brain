@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { useUiStore } from "@/stores/ui";
+import { useUiStore, hasRightSidebar } from "@/stores/ui";
 import { useFileOperations } from "./useFileOperations";
 
 /**
  * Cmd+K (jump-to-anything command palette), Cmd+N/Shift+N (new file/folder),
- * Cmd+W (close file), Shift+Cmd+R (rename selected file, else folder), Cmd+1/2/3 (writing mode: Ideate/Write/Review),
- * Cmd+Shift+1/2/3 (width presets), Cmd+D/Shift+Cmd+D (toggle Workspaces/
- * Content columns), Cmd+J (toggle right sidebar), Shift+Cmd+F (toggle fullscreen),
+ * Cmd+W (close file), Shift+Cmd+R (rename selected file, else folder), Cmd+1/2/3/4 (writing mode:
+ * Ideate/Explore/Write/Review), Cmd+Shift+1/2/3 (width presets), Cmd+D/Shift+Cmd+D (toggle Workspaces/
+ * Content columns), Cmd+J (toggle right sidebar, in the modes that have one), Shift+Cmd+F (toggle fullscreen),
  * Escape (exit fullscreen), Cmd+Plus/Minus/0 (app font scale — deliberately NOT
  * the WKWebView's own pinch/Cmd-zoom, which would zoom UI chrome and prose
  * together at a fixed native step; this scales the app's own rem tokens).
@@ -19,6 +19,7 @@ export function useGlobalShortcuts() {
   const startRename = useWorkspaceStore((s) => s.startRename);
   const treeVisible = useUiStore((s) => s.treeVisible);
   const fileListVisible = useUiStore((s) => s.fileListVisible);
+  const writingMode = useUiStore((s) => s.writingMode);
   const setWidthPreset = useUiStore((s) => s.setWidthPreset);
   const setWritingMode = useUiStore((s) => s.setWritingMode);
   const incrementFontScale = useUiStore((s) => s.incrementFontScale);
@@ -81,8 +82,11 @@ export function useGlobalShortcuts() {
         e.preventDefault();
         toggleTreeVisible();
       } else if (key === "j") {
+        // Only in the modes that render a right sidebar: elsewhere the
+        // toggle controls nothing on screen, and flipping it would still
+        // change what the next mode switch shows.
         e.preventDefault();
-        toggleRightSidebarVisible();
+        if (hasRightSidebar(writingMode)) toggleRightSidebarVisible();
       } else if (key === "f" && e.shiftKey) {
         e.preventDefault();
         toggleFullscreen();
@@ -100,8 +104,11 @@ export function useGlobalShortcuts() {
         setWritingMode("ideate");
       } else if (e.key === "2") {
         e.preventDefault();
-        setWritingMode("write");
+        setWritingMode("explore");
       } else if (e.key === "3") {
+        e.preventDefault();
+        setWritingMode("write");
+      } else if (e.key === "4") {
         e.preventDefault();
         setWritingMode("review");
       } else if (e.key === "=" || e.key === "+") {
@@ -124,6 +131,7 @@ export function useGlobalShortcuts() {
     startRename,
     treeVisible,
     fileListVisible,
+    writingMode,
     setWidthPreset,
     setWritingMode,
     createFileMutation,

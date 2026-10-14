@@ -29,12 +29,16 @@ opens the app. If Brain is already running, the folder is handed to the running 
 tree of markdown files, no proprietary format, no lock-in. Add as many workspaces as you like
 and switch between them instantly.
 
-**Three writing modes**, switchable per file with `⌘1` / `⌘2` / `⌘3`:
+**Four modes**, switchable per file with `⌘1` / `⌘2` / `⌘3` / `⌘4`:
 
 - **Ideate** — a research agent sits next to your draft, chats about angles, open questions,
   and sources, grounded in the file you're actually working on.
 
   ![Ideate mode](docs/screenshots/ideate-mode.png)
+
+- **Explore** — the whole workspace as a graph: every note a dot, every link between two notes
+  a line, arranged by a force layout. Hover a note to see what it connects to, click one to
+  open it.
 
 - **Write** — a clean, distraction-free markdown editor for getting the draft down.
 
@@ -57,11 +61,11 @@ and switch between them instantly.
 | `⌘⇧N` | New folder |
 | `⌘W` | Close file |
 | `⌘⇧R` | Rename the selected file (or folder) — double-clicking a name works too |
-| `⌘1` / `⌘2` / `⌘3` | Switch to Ideate / Write / Review mode |
+| `⌘1` / `⌘2` / `⌘3` / `⌘4` | Switch to Ideate / Explore / Write / Review mode |
 | `⌘⇧1` / `⌘⇧2` / `⌘⇧3` | Set editor width: narrow / normal / full |
 | `⌘D` | Toggle the workspace/folder tree |
 | `⌘⇧D` | Toggle the file list column |
-| `⌘J` | Toggle the right sidebar |
+| `⌘J` | Toggle the right sidebar (Ideate and Review, the modes that have one) |
 | `⌘⇧F` | Toggle fullscreen |
 | `⌘+` / `⌘-` / `⌘0` | Increase / decrease / reset app font scale |
 

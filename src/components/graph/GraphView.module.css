@@ -1,0 +1,108 @@
+.pane {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The canvas is the drag surface for both panning and node dragging, so
+     the cursor is set from JS as the pointer moves between the two. */
+  cursor: grab;
+}
+
+.canvas[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+.canvas[data-over-node="true"] {
+  cursor: pointer;
+}
+
+/* Colors the canvas reads back through getComputedStyle. Canvas can't use
+   CSS custom properties directly, so the themeable values are declared here
+   — one place, light and dark both — and sampled in JS on each repaint. */
+.palette {
+  --graph-node: var(--text-secondary);
+  --graph-node-selected: var(--hint-text);
+  --graph-node-dim: var(--border-hairline);
+  --graph-edge: var(--border-hairline);
+  --graph-edge-active: var(--hint-text);
+  --graph-label: var(--text-secondary);
+  --graph-label-strong: var(--text-primary);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: var(--space-6);
+}
+
+.message {
+  max-width: 46ch;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: var(--type-ui-label);
+  line-height: var(--leading-ui);
+  color: var(--text-secondary);
+}
+
+.message p + p {
+  margin-top: var(--space-3);
+  font-size: var(--type-ui-caption);
+  color: var(--text-tertiary);
+}
+
+.message code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  color: var(--text-secondary);
+}
+
+/* Bottom-left status: node/edge counts and any broken links. */
+.stats {
+  position: absolute;
+  left: var(--space-4);
+  bottom: var(--space-3);
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  font-family: var(--font-sans);
+  font-size: var(--type-ui-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.controls {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-3);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.controls button {
+  font-family: var(--font-sans);
+  font-size: var(--type-ui-caption);
+  color: var(--text-secondary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}

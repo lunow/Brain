@@ -1,4 +1,4 @@
-import { Fragment, useMemo, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { GFM, parser as markdownParser } from "@lezer/markdown";
 import type { SyntaxNode, Tree } from "@lezer/common";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -17,11 +17,17 @@ import styles from "./MarkdownMessage.module.css";
  * model emitted into live markup. Building elements means tags in the
  * response can only ever be text.
  *
- * Streaming is handled by being cheap rather than incremental: answers are a
- * few kB and the parse is memoized per content string, so re-parsing on each
- * delta is not worth optimising away. Half-finished markup mid-stream (an
- * unclosed `**`, a fence still being written) simply renders as what it
- * currently is and resolves itself as more text arrives.
+ * Streaming re-parses, but at frame rate rather than per token. The parse is
+ * memoized per content string, and the content a render sees is coalesced to
+ * one update per animation frame: a streamed answer arrives as roughly one
+ * delta per token, so parsing each one meant ~5000 full re-parses of a
+ * growing document for a 20kB answer — about 6s of main-thread work. At
+ * frame rate that is ~360 parses instead, with identical output, because the
+ * final delta always lands (see useFrameCoalesced).
+ *
+ * Half-finished markup mid-stream (an unclosed `**`, a fence still being
+ * written) simply renders as what it currently is and resolves itself as
+ * more text arrives.
  */
 
 const parser = markdownParser.configure([GFM]);
@@ -344,12 +350,45 @@ function renderBlocks(node: SyntaxNode, source: string, key: string, tight = fal
   return out;
 }
 
+/**
+ * Follows `value`, but changes at most once per animation frame.
+ *
+ * The trailing value is never dropped: every change schedules a frame if one
+ * isn't already pending, and the pending frame reads the latest value at the
+ * moment it runs — so the last token of a stream is always rendered.
+ */
+function useFrameCoalesced(value: string): string {
+  const [shown, setShown] = useState(value);
+  const latest = useRef(value);
+  const frame = useRef<number | null>(null);
+  latest.current = value;
+
+  useEffect(() => {
+    if (frame.current !== null) return;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = null;
+      setShown(latest.current);
+    });
+  }, [value]);
+
+  useEffect(
+    () => () => {
+      if (frame.current !== null) cancelAnimationFrame(frame.current);
+    },
+    [],
+  );
+
+  return shown;
+}
+
 export function MarkdownMessage({ content }: { content: string }) {
+  const coalesced = useFrameCoalesced(content);
+
   const rendered = useMemo(() => {
-    if (!content) return null;
-    const tree: Tree = parser.parse(content);
-    return renderBlocks(tree.topNode, content, "b");
-  }, [content]);
+    if (!coalesced) return null;
+    const tree: Tree = parser.parse(coalesced);
+    return renderBlocks(tree.topNode, coalesced, "b");
+  }, [coalesced]);
 
   return <div className={styles.markdown}>{rendered}</div>;
 }
