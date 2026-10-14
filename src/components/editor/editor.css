@@ -34,23 +34,30 @@
   line-height: var(--leading-tight);
 }
 
-/* Blank-line spacing between blocks — see collectBlankLineDecorations in
+/* Paragraph spacing — see collectBlankLineDecorations in
    extensions/livePreview.ts for which line gets which class.
 
-   An empty line is normally a full line of prose tall (--leading-body),
-   which is far more air than paragraph spacing wants. Tight is the gap
-   inside a run of paragraphs; loose closes off the last paragraph before
-   a heading, a list, or the end of the document. Both are rem-based so
-   they track the app's font-scale, and both stay tall enough to host a
-   caret comfortably, since these lines are real editable positions.
+   The blank line between two paragraphs is never shown as a line: it
+   collapses to nothing, and the first blank line of a run carries a gap
+   sized like paragraph spacing instead. Tight is the gap inside a run of
+   paragraphs; loose closes off the last paragraph before a heading, a
+   list, or the end of the document. Both are rem-based so they track the
+   app's font-scale. The caret never rests on these lines (paragraphs.ts).
 
    .cm-content is for specificity, as with the heading rules below. */
-.cm-content .cm-mkBlankTight {
-  line-height: 1.125rem;
+.cm-content .cm-mkBlank {
+  height: 0;
+  line-height: 0;
+  font-size: 0;
+  overflow: hidden;
 }
 
-.cm-content .cm-mkBlankLoose {
-  line-height: 1.625rem;
+.cm-content .cm-mkGapTight {
+  height: 0.875rem;
+}
+
+.cm-content .cm-mkGapLoose {
+  height: 1.5rem;
 }
 
 /* Law of proximity: a heading belongs to the text BELOW it, so the space
@@ -58,10 +65,9 @@
    equidistant between two blocks and reads as belonging to neither.
 
    In this editor the document stays plain markdown, so the gap on each
-   side of a heading is a real blank source line (one body line-height,
-   identical above and below). Padding on the heading's own line is what
-   tips the balance: it only ever adds to the space above, so the ratio is
-   blank-line + padding above against blank-line alone below.
+   side of a heading is the same paragraph gap. Padding on the heading's
+   own line is what tips the balance: it only ever adds to the space above,
+   so the ratio is gap + padding above against gap alone below.
 
    Scaled by level — an h1 wants a bigger run-up than an h4 — and in rem so
    it tracks the app's font-scale setting (Cmd +/-) like everything else.

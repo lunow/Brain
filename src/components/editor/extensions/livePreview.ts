@@ -6,6 +6,7 @@ import { MermaidWidget } from "./mermaidWidget";
 import { TableWidget } from "./tableWidget";
 import { collectSmartTypographyDecorations } from "./smartTypographyIntegration";
 import { collectPathLinkDecorations } from "./pathLink";
+import { topLevelBlockAt } from "./paragraphs";
 
 /**
  * WYSIWYG-style "live preview": the document stays plain-text markdown at
@@ -87,49 +88,50 @@ interface PendingDecoration {
 }
 
 
-/** The top-level block a position sits in, or "Document" when it sits
- *  between blocks — which is exactly where a separating blank line is. */
-function topLevelBlockAt(state: EditorState, pos: number): string {
-  let node = syntaxTree(state).resolveInner(pos, 1);
-  while (node.parent && node.parent.name !== "Document") node = node.parent;
-  return node.name;
-}
-
 /**
- * Spacing for the blank lines BETWEEN blocks.
+ * Paragraph spacing: the blank lines BETWEEN blocks are never shown as
+ * lines. Each one collapses to nothing, and the first of a run becomes a
+ * gap of paragraph-sized space instead (caret handling for these lines
+ * lives in paragraphs.ts). A run of paragraphs reads as one
+ * block of thought and gets the tighter gap; the last paragraph before
+ * something else (a heading, a list, the end of the document) gets more
+ * room to close the group off.
  *
- * The document stays plain markdown, so the gap between two paragraphs is
- * a real empty line, and every empty line is the same height as a line of
- * prose — far more air than paragraph spacing wants. These shrink it, and
- * shrink it by different amounts depending on what comes next: a run of
- * paragraphs reads as one block of thought and wants to be tight, while
- * the last paragraph before something else (a heading, a list, the end of
- * the document) wants a little more room to close the group off.
- *
- * Only blank lines that actually separate top-level blocks are touched —
- * a blank line inside fenced code, frontmatter, a table or a quote
- * resolves to that block rather than to "Document", and is left alone.
+ * The one exception is an empty line the caret is sitting on — a paragraph
+ * that was just started with Enter — which stays a full line so there is
+ * somewhere to see the caret. Only blank lines that actually separate
+ * top-level blocks are touched; a blank line inside fenced code,
+ * frontmatter, a table or a quote is real content and left alone.
  */
 function collectBlankLineDecorations(state: EditorState): PendingDecoration[] {
   const out: PendingDecoration[] = [];
   const lineCount = state.doc.lines;
+  const isBlank = (n: number) => state.doc.line(n).text.trim().length === 0;
+  const hasCaret = (n: number) => {
+    const line = state.doc.line(n);
+    return state.selection.ranges.some((r) => r.empty && r.head >= line.from && r.head <= line.to);
+  };
 
   for (let i = 1; i <= lineCount; i++) {
+    if (!isBlank(i) || hasCaret(i)) continue;
     const line = state.doc.line(i);
-    if (line.text.trim().length !== 0) continue;
     if (topLevelBlockAt(state, line.from) !== "Document") continue;
 
-    // Skip any further blank lines to find the block this gap leads into.
+    // The gap goes on the first blank line after text, or the first after
+    // the caret's own empty paragraph; the rest of the run adds nothing.
+    const startsGap = i === 1 || !isBlank(i - 1) || hasCaret(i - 1);
+
     let next = i + 1;
-    while (next <= lineCount && state.doc.line(next).text.trim().length === 0) next++;
+    while (next <= lineCount && isBlank(next)) next++;
     const leadsIntoParagraph =
       next <= lineCount && topLevelBlockAt(state, state.doc.line(next).from) === "Paragraph";
 
+    const gap = startsGap ? (leadsIntoParagraph ? " cm-mkGapTight" : " cm-mkGapLoose") : "";
     out.push({
       from: line.from,
       to: line.from,
       isLine: true,
-      deco: Decoration.line({ class: leadsIntoParagraph ? "cm-mkBlankTight" : "cm-mkBlankLoose" }),
+      deco: Decoration.line({ class: "cm-mkBlank" + gap }),
     });
   }
 
@@ -286,6 +288,14 @@ function buildDecorations(state: EditorState): DecorationSet {
             attributes: href ? { "data-href": href, title: "⌘-click to open" } : undefined,
           }),
         });
+        return;
+      }
+
+      if (type === "HardBreak") {
+        // Shift-Enter writes "\\\n"; the backslash is syntax, not text.
+        if (state.doc.sliceString(node.from, node.from + 1) === "\\") {
+          pending.push({ from: node.from, to: node.from + 1, deco: Decoration.replace({}) });
+        }
         return;
       }
 

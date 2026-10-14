@@ -6,6 +6,7 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { GFM } from "@lezer/markdown";
 import { livePreviewField } from "./extensions/livePreview";
 import { formattingKeyBindings } from "./extensions/formatting";
+import { paragraphKeyBindings, paragraphs } from "./extensions/paragraphs";
 import { pathLinkClickHandler } from "./extensions/pathLink";
 import { mdLinkClickHandler } from "./extensions/mdLink";
 import { pasteLinkHandler } from "./extensions/pasteLink";
@@ -73,10 +74,11 @@ export function MarkdownEditor({
       doc: content,
       extensions: [
         history(),
-        keymap.of([...formattingKeyBindings, ...defaultKeymap, ...historyKeymap]),
+        keymap.of([...formattingKeyBindings, ...paragraphKeyBindings, ...defaultKeymap, ...historyKeymap]),
         markdown({ base: markdownLanguage, extensions: [GFM, frontmatterExtension] }),
         EditorView.lineWrapping,
         livePreviewField,
+        paragraphs,
         pathLinkClickHandler,
         mdLinkClickHandler(() => filePath),
         pasteLinkHandler,
