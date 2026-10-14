@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getWorkspaceRoots, listMarkdownFiles, readFile } from "@/lib/tauri-commands";
 import { buildNoteGraph, type NoteGraph, type ScannedNote } from "@/lib/noteGraph";
+import { rootContaining } from "@/lib/notePaths";
+import { useWorkspaceStore } from "@/stores/workspace";
 
 /* Reading the whole vault is one `readFile` IPC call per note, so they go out
    in batches rather than one at a time (serial round trips dominate on a few
@@ -27,39 +29,46 @@ async function readInBatches(paths: string[]): Promise<ScannedNote[]> {
 }
 
 /**
- * Scans every markdown file in the open workspaces and builds the link graph.
+ * Scans the selected workspace and builds the link graph of its notes.
+ *
+ * One workspace, not all of them: the open roots are unrelated folders —
+ * separate wikis, a client's notes, a side project — and drawing them in one
+ * picture produces a hairball of islands rather than a map of anything. The
+ * scope follows the sidebar selection, so switching workspace switches the
+ * graph.
  *
  * The scan is the expensive part of the graph view, so it lives behind
- * react-query: mounting the view again reuses the cached graph, and the
+ * react-query: coming back to the view reuses the cached graph, and the
  * `markdownFiles` invalidation `useFsWatcher` already fires on any filesystem
- * change refreshes it while the view is open.
- *
- * The roots are part of the key rather than read inside the scan: opening or
- * closing a workspace folder isn't a filesystem event, so nothing invalidates
- * `markdownFiles` for it, and a graph built from the old roots would stay on
- * screen — missing the folder just added, or still drawing the one removed.
- * The key keeps the `markdownFiles` prefix so the watcher's invalidation
- * still matches.
+ * change refreshes it while the view is open. The scoped root is part of the
+ * key — selecting another workspace isn't a filesystem event, so nothing
+ * would otherwise invalidate the old graph — and the key keeps the
+ * `markdownFiles` prefix so the watcher's invalidation still matches.
  *
  * `enabled` keeps the scan from running at all until the graph is actually on
  * screen — no reason to read the vault while the user is writing.
  */
 export function useNoteGraph(enabled: boolean) {
+  const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
+  const selectedFolderPath = useWorkspaceStore((s) => s.selectedFolderPath);
   const { data: roots } = useQuery({ queryKey: ["workspaceRoots"], queryFn: getWorkspaceRoots, enabled });
 
-  return useQuery<NoteGraph>({
-    queryKey: ["markdownFiles", "noteGraph", roots?.map((root) => root.path) ?? []],
-    enabled: enabled && roots !== undefined,
+  // The open file wins over the selected folder: ⌘2 from a draft should show
+  // the graph that draft is part of.
+  const scope = roots ? rootContaining(selectedFilePath ?? selectedFolderPath ?? "", roots) : undefined;
+
+  const query = useQuery<NoteGraph>({
+    queryKey: ["markdownFiles", "noteGraph", scope?.path ?? null],
+    enabled: enabled && scope !== undefined,
     queryFn: async () => {
-      if (!roots || roots.length === 0) return { nodes: [], edges: [], unresolvedCount: 0 };
+      if (!scope) return { nodes: [], edges: [], unresolvedCount: 0 };
 
-      const listings = await Promise.all(roots.map((root) => listMarkdownFiles(root.path, true, false)));
+      const listing = await listMarkdownFiles(scope.path, true, false);
+      const paths = [...new Set(listing.filter((f) => f.size <= MAX_SCAN_BYTES).map((f) => f.path))];
 
-      // Workspace roots can nest, or the same folder can be open twice under
-      // different names — either way a note must appear once.
-      const paths = [...new Set(listings.flat().filter((f) => f.size <= MAX_SCAN_BYTES).map((f) => f.path))];
-
-      return buildNoteGraph(await readInBatches(paths), roots);
+      return buildNoteGraph(await readInBatches(paths), [scope]);
     },
   });
+
+  return { ...query, scope: scope ?? null };
 }

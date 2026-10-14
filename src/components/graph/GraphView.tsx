@@ -71,7 +71,7 @@ function readPalette(el: HTMLElement | null): PaletteColors {
  * pointer state live in refs and the canvas is drawn imperatively.
  */
 export function GraphView() {
-  const { data: graph, isLoading, isError, error } = useNoteGraph(true);
+  const { data: graph, isLoading, isError, error, scope } = useNoteGraph(true);
   const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
   const selectFile = useWorkspaceStore((s) => s.selectFile);
   const setWritingMode = useUiStore((s) => s.setWritingMode);
@@ -526,12 +526,14 @@ export function GraphView() {
   const edgeCount = graph?.edges.length ?? 0;
 
   let message: React.ReactNode = null;
-  if (isLoading) {
+  if (!scope) {
+    message = <p>Select a workspace to see how its notes connect.</p>;
+  } else if (isLoading) {
     message = <p>Reading your notes…</p>;
   } else if (isError) {
     message = <p>Couldn’t read the vault: {error instanceof Error ? error.message : "unknown error"}</p>;
   } else if (nodeCount === 0) {
-    message = <p>No markdown files in the open workspaces yet.</p>;
+    message = <p>No markdown files in {scope.displayName} yet.</p>;
   } else if (edgeCount === 0) {
     message = (
       <>
@@ -557,6 +559,7 @@ export function GraphView() {
       {nodeCount > 0 && (
         <>
           <div className={styles.stats}>
+            <span className={styles.scopeName}>{scope?.displayName}</span>
             <span>
               {nodeCount} {nodeCount === 1 ? "note" : "notes"}
             </span>

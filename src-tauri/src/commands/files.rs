@@ -1,3 +1,4 @@
+use super::ignore::is_ignored_dir;
 use serde::Serialize;
 use std::fs;
 use std::path::Path;
@@ -84,7 +85,7 @@ fn collect_markdown_files(
 
         let file_type = entry.file_type().map_err(|e| e.to_string())?;
         if file_type.is_dir() {
-            if recursive {
+            if recursive && !is_ignored_dir(&name) {
                 collect_markdown_files(&entry.path(), recursive, include_preview, out)?;
             }
             continue;
@@ -194,6 +195,25 @@ mod tests {
         let entries = list_markdown_files(dir.to_string_lossy().to_string(), false, false).unwrap();
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].preview, "");
+
+        stdfs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn list_markdown_files_recursive_skips_dependency_and_build_folders() {
+        let dir = temp_dir("ignored-dirs");
+        File::create(dir.join("note.md")).unwrap();
+        stdfs::create_dir_all(dir.join("node_modules/some-package")).unwrap();
+        File::create(dir.join("node_modules/some-package/README.md")).unwrap();
+        stdfs::create_dir_all(dir.join("dist")).unwrap();
+        File::create(dir.join("dist/generated.md")).unwrap();
+        stdfs::create_dir_all(dir.join("notes")).unwrap();
+        File::create(dir.join("notes/real.md")).unwrap();
+
+        let entries = list_markdown_files(dir.to_string_lossy().to_string(), true, false).unwrap();
+        let mut names: Vec<String> = entries.iter().map(|e| e.name.clone()).collect();
+        names.sort();
+        assert_eq!(names, vec!["note.md", "real.md"]);
 
         stdfs::remove_dir_all(&dir).unwrap();
     }

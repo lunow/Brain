@@ -1,3 +1,4 @@
+use super::ignore::is_ignored_dir;
 use serde::Serialize;
 use std::fs;
 use std::path::Path;
@@ -23,7 +24,7 @@ pub fn list_dir_children(path: String) -> Result<Vec<DirEntryLite>, String> {
     for entry in read_dir {
         let entry = entry.map_err(|e| e.to_string())?;
         let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with('.') {
+        if name.starts_with('.') || is_ignored_dir(&name) {
             continue;
         }
         let file_type = entry.file_type().map_err(|e| e.to_string())?;
@@ -57,7 +58,7 @@ fn collect_folders(dir: &Path, out: &mut Vec<DirEntryLite>) -> Result<(), String
     for entry in read_dir {
         let entry = entry.map_err(|e| e.to_string())?;
         let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with('.') {
+        if name.starts_with('.') || is_ignored_dir(&name) {
             continue;
         }
         let file_type = entry.file_type().map_err(|e| e.to_string())?;
@@ -103,7 +104,7 @@ fn collect_stats(dir: &Path, stats: &mut FolderStats) -> Result<(), String> {
     for entry in read_dir {
         let entry = entry.map_err(|e| e.to_string())?;
         let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with('.') {
+        if name.starts_with('.') || is_ignored_dir(&name) {
             continue;
         }
         let file_type = entry.file_type().map_err(|e| e.to_string())?;
@@ -165,6 +166,32 @@ mod tests {
 
         assert_eq!(names, vec!["a", "b"]);
         assert!(result.iter().all(|e| e.is_dir));
+
+        fs::remove_dir_all(&tmp).unwrap();
+    }
+
+    #[test]
+    fn walks_skip_dependency_and_build_folders() {
+        let tmp = std::env::temp_dir().join(format!("write-tree-ignored-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(tmp.join("notes")).unwrap();
+        fs::create_dir_all(tmp.join("node_modules/some-package")).unwrap();
+        File::create(tmp.join("node_modules/some-package/README.md")).unwrap();
+
+        let children = list_dir_children(tmp.to_string_lossy().to_string()).unwrap();
+        assert_eq!(
+            children.iter().map(|e| e.name.clone()).collect::<Vec<_>>(),
+            vec!["notes"]
+        );
+
+        let all = list_all_folders(tmp.to_string_lossy().to_string()).unwrap();
+        assert_eq!(all.iter().map(|e| e.name.clone()).collect::<Vec<_>>(), vec!["notes"]);
+
+        // The sidebar's per-workspace summary counts what the app will browse,
+        // so it has to skip the same folders.
+        let stats = get_folder_stats(tmp.to_string_lossy().to_string()).unwrap();
+        assert_eq!(stats.folder_count, 1);
+        assert_eq!(stats.file_count, 0);
 
         fs::remove_dir_all(&tmp).unwrap();
     }

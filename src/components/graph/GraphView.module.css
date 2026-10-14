@@ -68,6 +68,12 @@
 }
 
 /* Bottom-left status: node/edge counts and any broken links. */
+/** Which workspace the graph is showing — the scope is the sidebar
+ *  selection, so it has to be readable from the graph itself. */
+.scopeName {
+  color: var(--text-secondary);
+}
+
 .stats {
   position: absolute;
   left: var(--space-4);
