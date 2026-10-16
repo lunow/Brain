@@ -96,6 +96,25 @@ function stripFencedCode(content: string): string {
 const INLINE_LINK =
   /(!?)\[(?:[^[\]\\]|\\.|\[(?:[^[\]\\]|\\.)*\])*\]\(\s*(<[^>]*>|[^\s)]*)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/g;
 
+/**
+ * Files that are machinery rather than notes, and so are never drawn.
+ *
+ * An LLM-wiki bundle keeps an `index.md` that links to every page, a `log.md`
+ * that records what was ingested, and a `CLAUDE.md` of instructions for the
+ * agent. Drawn, the index is the biggest hub in every vault purely because
+ * it is a table of contents, and the other two are writing about the wiki
+ * rather than part of it. They still exist as far as links are concerned: a
+ * link to one resolves, it just draws no edge and is never counted broken.
+ *
+ * Matched on the whole filename, case-insensitively, so a note genuinely
+ * named "log book.md" or "indexing.md" is unaffected.
+ */
+const NON_NOTE_FILENAMES = new Set(["index.md", "claude.md", "log.md"]);
+
+function isNonNoteFile(path: string): boolean {
+  return NON_NOTE_FILENAMES.has(path.slice(path.lastIndexOf("/") + 1).toLowerCase());
+}
+
 /** Separator for the undirected edge key. A NUL can't occur in a path. */
 const EDGE_KEY_SEP = "\0";
 
@@ -141,27 +160,36 @@ export function extractLinkTargets(content: string): string[] {
  */
 export function buildNoteGraph(notes: ScannedNote[], roots: RootFolder[]): NoteGraph {
   const byPath = new Map<string, GraphNode>();
+  const notDrawn = new Set<string>();
   for (const note of notes) {
-    byPath.set(note.path, { path: note.path, name: noteName(note.path), degree: 0 });
+    if (isNonNoteFile(note.path)) notDrawn.add(note.path);
+    else byPath.set(note.path, { path: note.path, name: noteName(note.path), degree: 0 });
   }
+
+  // A link may omit the extension ("[see](ideas)"), the way Obsidian's own
+  // links do; try the literal path first, then the markdown file it most
+  // likely meant.
+  const lookup = (resolved: string, exists: (path: string) => boolean): string | undefined =>
+    exists(resolved) ? resolved : MARKDOWN_EXTENSIONS.map((ext) => resolved + ext).find(exists);
 
   const edges: GraphEdge[] = [];
   const seenEdges = new Set<string>();
   let unresolvedCount = 0;
 
   for (const note of notes) {
+    if (notDrawn.has(note.path)) continue; // an index's links are a contents list, not thinking
+
     for (const href of extractLinkTargets(note.content)) {
       const resolved = resolveLocalLink(href, note.path, roots);
       if (resolved === null) continue; // external URL — not part of the vault
 
-      // A link may omit the extension ("[see](ideas)"), the way Obsidian's
-      // own links do; try the literal path first, then the markdown file it
-      // most likely meant.
-      const target = byPath.has(resolved)
-        ? resolved
-        : MARKDOWN_EXTENSIONS.map((ext) => resolved + ext).find((p) => byPath.has(p));
+      const target = lookup(resolved, (path) => byPath.has(path));
 
       if (!target) {
+        // A link to a file that's real but never drawn resolves fine; it just
+        // has no node to join.
+        if (lookup(resolved, (path) => notDrawn.has(path))) continue;
+
         // Only count a miss as a broken note link if it could have been one:
         // a dead link to an image or a PDF is a different kind of problem.
         const base = resolved.slice(resolved.lastIndexOf("/") + 1);

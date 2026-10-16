@@ -178,3 +178,33 @@ describe("buildNoteGraph", () => {
     expect(graph.edges).toEqual([]);
   });
 });
+
+describe("buildNoteGraph: files that aren't notes", () => {
+  it("never draws index, log or CLAUDE, whatever their case", () => {
+    const notes = [
+      note("/vault/index.md", "[a](./a.md) [b](./b.md)"),
+      note("/vault/Log.md", "ingested [a](./a.md)"),
+      note("/vault/CLAUDE.md", "instructions, linking [a](./a.md)"),
+      note("/vault/a.md", "[b](./b.md)"),
+      note("/vault/b.md", ""),
+    ];
+    const graph = buildNoteGraph(notes, ROOTS);
+    expect(graph.nodes.map((n) => n.name).sort()).toEqual(["a", "b"]);
+    // The index's links are a table of contents, so they are not edges either.
+    expect(graph.edges).toEqual([{ source: "/vault/a.md", target: "/vault/b.md" }]);
+  });
+
+  it("does not count a link to one of them as broken", () => {
+    const notes = [note("/vault/a.md", "see the [index](./index.md) and the [log](./log)"), note("/vault/index.md", ""), note("/vault/log.md", "")];
+    const graph = buildNoteGraph(notes, ROOTS);
+    expect(graph.unresolvedCount).toBe(0);
+    expect(graph.edges).toEqual([]);
+  });
+
+  it("leaves notes whose name merely starts the same alone", () => {
+    const notes = [note("/vault/indexing.md", "[x](<./log book.md>)"), note("/vault/log book.md", "")];
+    const graph = buildNoteGraph(notes, ROOTS);
+    expect(graph.nodes.map((n) => n.name).sort()).toEqual(["indexing", "log book"]);
+    expect(graph.edges).toHaveLength(1);
+  });
+});
