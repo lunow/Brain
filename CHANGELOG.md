@@ -5,6 +5,41 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 7
+
+**Explore**
+
+- A new fourth mode on `⌘2` draws the open workspace as a graph: every
+  markdown file is a dot, and every link between two of them is a line.
+  Only links you can follow inside the workspace become lines. Write and
+  Review move to `⌘3` and `⌘4`.
+- The graph shows one workspace at a time, following the sidebar selection,
+  and names it next to the note and link counts.
+- A wiki's `index.md`, `log.md` and `CLAUDE.md` are left out of the graph.
+  The index links to every page and would otherwise be the biggest hub for
+  being a table of contents. Links to them still resolve.
+
+**Editor**
+
+- Real paragraphs: blank separator lines collapse into paragraph spacing
+  and the caret skips them. Enter starts a new paragraph, Shift+Enter
+  inserts a line break, and Backspace/Delete join paragraphs across the
+  gap.
+- YAML frontmatter at the top of a file renders as a full-width key/value
+  table with a thin silver grid. Lists show one item per line. Put the
+  caret in it to edit the raw YAML.
+
+**Workspaces**
+
+- Folders holding dependencies and build output (such as `node_modules`)
+  are skipped everywhere: the Content column, the `⌘K` palette, the
+  workspace summary line and the graph.
+
+**Ideate**
+
+- Autoscroll keeps the end of a streamed answer in view instead of
+  stopping a line or two short.
+
 ## Version 6
 
 **Ideate**
