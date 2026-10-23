@@ -2,6 +2,7 @@ import { syntaxTree } from "@codemirror/language";
 import { type EditorState, RangeSetBuilder, StateField, type Transaction } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
 import { CodeBlockWidget } from "./codeBlockWidget";
+import { FrontmatterWidget } from "./frontmatterWidget";
 import { MermaidWidget } from "./mermaidWidget";
 import { TableWidget } from "./tableWidget";
 import { collectSmartTypographyDecorations } from "./smartTypographyIntegration";
@@ -216,8 +217,17 @@ function buildDecorations(state: EditorState): DecorationSet {
       const type = node.type.name;
 
       if (type === "Frontmatter") {
-        pending.push({ from: node.from, to: node.to, deco: Decoration.mark({ class: "cm-mkFrontmatter" }) });
         smartTextExcluded.push({ from: node.from, to: node.to });
+        if (!isLineRangeActive(state, node.from, node.to)) {
+          const source = state.doc.sliceString(node.from, node.to);
+          pending.push({
+            from: node.from,
+            to: node.to,
+            deco: Decoration.replace({ widget: new FrontmatterWidget(source), block: true }),
+          });
+          return false;
+        }
+        pending.push({ from: node.from, to: node.to, deco: Decoration.mark({ class: "cm-mkFrontmatter" }) });
         return;
       }
 

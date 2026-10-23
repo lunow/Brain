@@ -4,6 +4,41 @@
   color: var(--text-tertiary);
 }
 
+/* Frontmatter as a technical spec sheet: full measure, a silver 1px grid
+   (gray-300 flips to a dim gray in dark mode), and values that wrap and
+   keep their own line breaks (list items arrive one per line). */
+.cm-mkFrontmatterTable {
+  width: 100%;
+  margin: 0 0 1.5em;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  line-height: 1.5;
+  cursor: text;
+}
+
+.cm-mkFrontmatterTable th,
+.cm-mkFrontmatterTable td {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-300);
+  text-align: left;
+  vertical-align: top;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cm-mkFrontmatterTable th {
+  width: 1%;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cm-mkFrontmatterTable td {
+  color: var(--text-primary);
+}
+
 .cm-mkH1,
 .cm-mkH2,
 .cm-mkH3,
