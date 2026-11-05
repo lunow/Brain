@@ -497,11 +497,34 @@ function stripFrontmatter(markdown: string): string {
  *  Images render as an `[image: alt]` placeholder rather than being
  *  embedded, and mermaid/HTML blocks are not rendered. */
 export function markdownToPdfBytes(markdown: string, title: string): Uint8Array {
+  const { doc, ctx } = layoutDocument(markdown);
+  doc.setProperties({ title });
+
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...QUOTE_COLOR);
+    doc.text(String(i), ctx.pageWidth / 2, ctx.pageHeight - PAGE_MARGIN / 2, { align: "center" });
+  }
+
+  return new Uint8Array(doc.output("arraybuffer"));
+}
+
+/** How many pages the export of this document fills, counting the last one
+ *  by how far down its text area the content reached. */
+export function markdownPageCount(markdown: string): number {
+  const { doc, ctx } = layoutDocument(markdown);
+  const lastPageFill = (ctx.y - PAGE_MARGIN) / (ctx.pageHeight - 2 * PAGE_MARGIN);
+  return doc.getNumberOfPages() - 1 + lastPageFill;
+}
+
+function layoutDocument(markdown: string): { doc: jsPDF; ctx: Ctx } {
   const source = stripFrontmatter(markdown);
   const tree = markdownParser.configure([GFM]).parse(source);
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-  doc.setProperties({ title });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const ctx: Ctx = {
@@ -518,14 +541,5 @@ export function markdownToPdfBytes(markdown: string, title: string): Uint8Array 
     child = child.nextSibling;
   }
 
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...QUOTE_COLOR);
-    doc.text(String(i), pageWidth / 2, pageHeight - PAGE_MARGIN / 2, { align: "center" });
-  }
-
-  return new Uint8Array(doc.output("arraybuffer"));
+  return { doc, ctx };
 }

@@ -81,6 +81,16 @@
   --measure: 1000px;
   --measure-full: none;
 
+  /* The PDF export's A4 page (src/lib/markdownToPdf.ts), drawn at the scale where its
+     10.5pt body text matches --type-editor-body, so lines break about where
+     they will on paper: roughly 1020 x 1443px with 96px margins at the
+     default size. Unlike --measure this follows the type size on purpose. A
+     page has to hold the same text at any Cmd +/- setting. */
+  --a4-point: calc(var(--type-editor-body) / 10.5);
+  --measure-a4: calc(595.28 * var(--a4-point));
+  --a4-height: calc(841.89 * var(--a4-point));
+  --a4-margin: calc(56 * var(--a4-point));
+
   /* Charter ships exactly three upright weights — Roman (400), Bold (700)
      and Black (900) — with no semibold in between. CSS font matching maps a
      request for 600 up to Bold and a request for 500 *down* to Roman, so

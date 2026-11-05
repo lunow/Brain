@@ -16,6 +16,7 @@ import { reviewSuggestionsExtension, setSuggestionsEffect, type SuggestionAction
 import { typewriterScroll } from "./extensions/typewriterScroll";
 import { externalReloadAnnotation, minimalReplacement } from "./externalSync";
 import type { PlacedSuggestion } from "@/lib/reviewSuggestions";
+import { useUiStore } from "@/stores/ui";
 import "./editor.css";
 import styles from "./MarkdownEditor.module.css";
 
@@ -86,6 +87,7 @@ export function MarkdownEditor({
         reviewSuggestionsExtension((id, action) => onResolveSuggestionRef.current?.(id, action)),
         EditorView.updateListener.of((update) => {
           if (!update.docChanged) return;
+          useUiStore.getState().bumpDocumentRevision();
           // A reload from disk is not a user edit: reporting it would mark the
           // file dirty and schedule an autosave of what we just read back.
           if (update.transactions.some((tr) => tr.annotation(externalReloadAnnotation))) return;

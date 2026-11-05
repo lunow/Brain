@@ -337,6 +337,25 @@ export function WidthFullIcon({ className }: { className?: string }) {
   );
 }
 
+/** A portrait sheet, not the landscape page of the other width glyphs: this
+ *  preset is about the paper's shape rather than the column's width. */
+export function WidthA4Icon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <rect x="3.5" y="1.5" width="9" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.1" />
+      <rect x="3.5" y="1.5" width="9" height="13" rx="1.5" fill="currentColor" fillOpacity="0.35" />
+    </svg>
+  );
+}
+
 /** Up-arrow-from-tray glyph for the Export action. */
 export function ExportIcon({ className }: { className?: string }) {
   return (

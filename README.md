@@ -62,7 +62,7 @@ and switch between them instantly.
 | `⌘W` | Close file |
 | `⌘⇧R` | Rename the selected file (or folder) — double-clicking a name works too |
 | `⌘1` / `⌘2` / `⌘3` / `⌘4` | Switch to Ideate / Explore / Write / Review mode |
-| `⌘⇧1` / `⌘⇧2` / `⌘⇧3` | Set editor width: narrow / normal / full |
+| `⌘⇧1` / `⌘⇧2` / `⌘⇧3` | Set editor width: narrow / normal / full (the A4 page width, which also shows the length in pages, is in the toolbar and the command palette) |
 | `⌘D` | Toggle the workspace/folder tree |
 | `⌘⇧D` | Toggle the file list column |
 | `⌘J` | Toggle the right sidebar (Ideate and Review, the modes that have one) |

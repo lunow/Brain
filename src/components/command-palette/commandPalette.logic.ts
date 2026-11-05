@@ -124,6 +124,7 @@ export function buildCommands(ctx: CommandContext): CommandResult[] {
     { type: "command", id: "width-narrow", section: "View", label: "Narrow Width", hint: "⇧⌘1", run: () => ctx.setWidthPreset("narrow") },
     { type: "command", id: "width-normal", section: "View", label: "Normal Width", hint: "⇧⌘2", run: () => ctx.setWidthPreset("normal") },
     { type: "command", id: "width-full", section: "View", label: "Full Width", hint: "⇧⌘3", run: () => ctx.setWidthPreset("full") },
+    { type: "command", id: "width-a4", section: "View", label: "A4 Page Width", run: () => ctx.setWidthPreset("a4") },
     { type: "command", id: "export-pdf", section: "Export", label: "Export as PDF", run: () => ctx.requestExport("pdf") },
     { type: "command", id: "export-word", section: "Export", label: "Export as Word", run: () => ctx.requestExport("word") },
     { type: "command", id: "export-publish", section: "Export", label: "Publish", run: () => ctx.requestExport("publish") },

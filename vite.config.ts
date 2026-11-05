@@ -16,6 +16,11 @@ export default defineConfig(async () => ({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
 
+  // The default iife can't split chunks, and jsPDF's dynamic imports need to.
+  worker: {
+    format: "es",
+  },
+
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

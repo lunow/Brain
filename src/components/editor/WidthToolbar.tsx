@@ -1,13 +1,16 @@
 import type { ReactNode } from "react";
 import { useUiStore, type WidthPreset } from "@/stores/ui";
-import { WidthNarrowIcon, WidthNormalIcon, WidthFullIcon } from "@/components/common/icons";
+import { WidthNarrowIcon, WidthNormalIcon, WidthFullIcon, WidthA4Icon } from "@/components/common/icons";
 import { ExportMenu, type ExportKind } from "./ExportMenu";
+import { PageCount } from "./PageCount";
 import styles from "./WidthToolbar.module.css";
 
-const OPTIONS: { key: WidthPreset; label: string; hint: string; Icon: typeof WidthNarrowIcon }[] = [
+const OPTIONS: { key: WidthPreset; label: string; hint?: string; Icon: typeof WidthNarrowIcon }[] = [
   { key: "narrow", label: "Narrow", hint: "⇧⌘1", Icon: WidthNarrowIcon },
   { key: "normal", label: "Width", hint: "⇧⌘2", Icon: WidthNormalIcon },
   { key: "full", label: "Full", hint: "⇧⌘3", Icon: WidthFullIcon },
+  // No ⇧⌘4: macOS takes it for its screenshot tool before the app sees it.
+  { key: "a4", label: "A4", Icon: WidthA4Icon },
 ];
 
 export function WidthToolbar({
@@ -40,6 +43,7 @@ export function WidthToolbar({
       </div>
       <div className={styles.center}>{center}</div>
       <div className={`${styles.side} ${styles.sideEnd}`}>
+        {widthPreset === "a4" && !disabled && <PageCount />}
         <div className={styles.group}>
           {OPTIONS.map((opt) => (
             <button
@@ -49,7 +53,7 @@ export function WidthToolbar({
               data-active={widthPreset === opt.key}
               onClick={() => setWidthPreset(opt.key)}
               disabled={disabled}
-              title={`${opt.label} (${opt.hint})`}
+              title={opt.hint ? `${opt.label} (${opt.hint})` : opt.label}
               aria-label={opt.label}
             >
               <opt.Icon />

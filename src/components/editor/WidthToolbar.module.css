@@ -43,6 +43,14 @@
   opacity: 1;
 }
 
+.pages {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: var(--type-ui-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+
 .group {
   display: flex;
   gap: 2px;

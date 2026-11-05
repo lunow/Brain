@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { EditorView } from "@codemirror/view";
 
-export type WidthPreset = "narrow" | "normal" | "full";
+export type WidthPreset = "narrow" | "normal" | "full" | "a4";
 export type WritingMode = "ideate" | "explore" | "write" | "review";
 
 /** Whether a mode has anything to put in the right sidebar. Write is just
@@ -128,6 +128,12 @@ interface UiState {
   activeEditorView: EditorView | null;
   setActiveEditorView: (view: EditorView | null) => void;
 
+  /** Bumped whenever the live document changes, so the toolbar's page count
+   *  can follow activeEditorView's text without FileEditor re-rendering on
+   *  every keystroke to pass it down. */
+  documentRevision: number;
+  bumpDocumentRevision: () => void;
+
   /** Drag-to-resize widths for the tree, file list, and right sidebar
    *  columns. Persisted to localStorage so layout choices survive restarts. */
   treeWidth: number;
@@ -182,6 +188,9 @@ export const useUiStore = create<UiState>((set, get) => ({
 
   activeEditorView: null,
   setActiveEditorView: (view) => set({ activeEditorView: view }),
+
+  documentRevision: 0,
+  bumpDocumentRevision: () => set((s) => ({ documentRevision: s.documentRevision + 1 })),
 
   treeWidth: initialPanelWidths.tree,
   setTreeWidth: (width) => {

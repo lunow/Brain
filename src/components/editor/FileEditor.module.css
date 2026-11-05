@@ -88,6 +88,11 @@
   max-width: var(--measure-full);
 }
 
+.widthContainer[data-width="a4"] {
+  max-width: var(--measure-a4);
+  padding: var(--a4-margin);
+}
+
 /* Fullscreen (distraction-free) view. Horizontal centering is now the
    default above, so this only adds the vertical breathing room that reads
    better once the toolbar and side columns are gone. Full has no max-width
@@ -99,6 +104,13 @@
 .widthContainer[data-centered="true"] {
   margin: var(--fullscreen-margin) auto;
   min-height: calc(100% - 2 * var(--fullscreen-margin));
+}
+
+/* A short document still shows one whole sheet of paper, which is the point
+   of the preset, so this replaces the fit-to-pane heights above. The extra
+   attribute (always present) is what lets it outrank them in every state. */
+.widthContainer[data-width="a4"][data-fullscreen] {
+  min-height: var(--a4-height);
 }
 
 .loading {
