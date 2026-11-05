@@ -38,15 +38,13 @@ export function useGlobalShortcuts() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        // Several other Escape handlers exist across the app (command
-        // palette, table-cell inline editor, table context menu) and none
-        // of them call stopPropagation, so this listener sees the same
-        // keydown they do. Only exit fullscreen if none of those are
+        // Other Escape handlers exist across the app (command palette, table
+        // context menu) and don't call stopPropagation, so this listener
+        // sees the same keydown they do. Only exit fullscreen if none of those are
         // currently the intended target of Escape — otherwise dismissing
         // one of them would also silently kick the user out of fullscreen.
-        const tableCellEditing = (document.activeElement as HTMLElement | null)?.isContentEditable ?? false;
         const tableContextMenuOpen = !!document.querySelector("[data-table-menu]");
-        if (fullscreenActive && !commandPaletteOpen && !tableCellEditing && !tableContextMenuOpen) {
+        if (fullscreenActive && !commandPaletteOpen && !tableContextMenuOpen) {
           exitFullscreen();
         }
         return;

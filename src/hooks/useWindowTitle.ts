@@ -2,7 +2,12 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getWorkspaceRoots } from "@/lib/tauri-commands";
+import { useUiStore } from "@/stores/ui";
 import { useWorkspaceStore } from "@/stores/workspace";
+
+/** With an Overlay title bar macOS paints the title over the window's content,
+ *  so it would land on the document once fullscreen drops the bar beneath it. */
+const titlePaintsOverContent = navigator.userAgent.includes("Mac");
 
 function basename(path: string): string {
   return path.slice(path.lastIndexOf("/") + 1);
@@ -23,6 +28,7 @@ function dirname(path: string): string {
 export function useWindowTitle() {
   const selectedFolderPath = useWorkspaceStore((s) => s.selectedFolderPath);
   const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
+  const fullscreenActive = useUiStore((s) => s.fullscreenActive);
   const { data: roots } = useQuery({ queryKey: ["workspaceRoots"], queryFn: getWorkspaceRoots });
 
   useEffect(() => {
@@ -45,9 +51,10 @@ export function useWindowTitle() {
     }
     if (selectedFilePath) parts.push(basename(selectedFilePath).replace(/\.md$/, ""));
 
-    const title = parts.length > 0 ? parts.join(" → ") : "Brain";
+    const breadcrumb = parts.length > 0 ? parts.join(" → ") : "Brain";
+    const title = fullscreenActive && titlePaintsOverContent ? "" : breadcrumb;
     getCurrentWindow()
       .setTitle(title)
       .catch(() => {});
-  }, [roots, selectedFolderPath, selectedFilePath]);
+  }, [roots, selectedFolderPath, selectedFilePath, fullscreenActive]);
 }

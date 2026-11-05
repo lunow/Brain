@@ -14,6 +14,7 @@ import { ReviewSidebar } from "@/components/sidebar/ReviewSidebar";
 import { GraphView } from "@/components/graph/GraphView";
 import { ColumnResizer } from "@/components/layout/ColumnResizer";
 import { PanelVisibilityToggles } from "@/components/layout/PanelVisibilityToggles";
+import { useTypewriterOverscroll } from "./useTypewriterOverscroll";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { WidthToolbar } from "./WidthToolbar";
 import type { ExportKind } from "./ExportMenu";
@@ -65,6 +66,7 @@ export function FileEditor() {
   // again instantly, but Write/Ideate should read as a clean document.
   const visibleSuggestions = writingMode === "review" ? suggestions : EMPTY_SUGGESTIONS;
   const resolveSuggestion = useReviewStore((s) => s.resolveSuggestion);
+  const activeEditorView = useUiStore((s) => s.activeEditorView);
   const setActiveEditorView = useUiStore((s) => s.setActiveEditorView);
 
   const { data: initialContent, isLoading } = useQuery({
@@ -80,6 +82,7 @@ export function FileEditor() {
   // EditorView and so resets the scroll position to the top of the file.
   const [externalReload, setExternalReload] = useState<{ text: string; token: number } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  useTypewriterOverscroll(scrollAreaRef, fullscreenActive ? activeEditorView : null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingContent = useRef<string | null>(null);
   const dirtyRef = useRef(dirty);

@@ -8,15 +8,18 @@ import type { Transaction } from "@codemirror/state";
  * real scrollable ancestor is FileEditor's `.scrollArea`, resolved through
  * `getScrollParent` on every update.
  *
- * A "typing flow" starts with the first typed keystroke after anything else
- * (a click, arrow keys, a mouse scroll, undo, paste, …) and anchors the
- * cursor's on-screen Y at that moment. Subsequent keystrokes in the flow that
- * move the cursor to another visual row — Enter, a wrapping line, Backspace
- * joining lines — scroll the parent by exactly that row delta so the cursor
- * stays where it was. Typing within one row changes nothing, so quick fixes
- * here and there never scroll, and there is no fixed "60% of the viewport"
- * target: wherever the user scrolled the line to before typing is where it
- * stays.
+ * A "typing flow" starts with the first keystroke after anything else (a
+ * click, arrow keys, a mouse scroll, undo, paste, …) and anchors the cursor's
+ * on-screen Y as it was *before* that keystroke applied — otherwise a flow
+ * opened by Enter would anchor on the new row and the line would visibly jump
+ * once. Keystrokes in the flow that move the cursor to another visual row —
+ * Enter, a wrapping line, Backspace joining lines — scroll the parent by
+ * exactly that row delta so the cursor stays where it was. Typing within one
+ * row changes nothing, so quick fixes here and there never scroll, and there
+ * is no fixed "60% of the viewport" target: wherever the user scrolled the
+ * line to before typing is where it stays. In fullscreen that can be anywhere
+ * on screen, even for a document's first or last line — see
+ * useTypewriterOverscroll.
  *
  * Any non-typing transaction or a scroll the plugin didn't cause itself ends
  * the flow; the next keystroke re-anchors at the cursor's then-current Y,
@@ -63,24 +66,39 @@ export function typewriterScroll(getScrollParent: () => HTMLElement | null) {
         update.view.requestMeasure(this.measure);
       }
 
+      /** Runs before CodeMirror applies the key, while the cursor is still
+       *  where the user put it. A key that turns out not to type anything
+       *  clears this again through update(). */
+      keydown() {
+        if (this.anchorY === null) this.anchorY = this.cursorY(this.view);
+      }
+
+      private cursorY(view: EditorView): number | null {
+        const parent = getScrollParent();
+        if (!parent) return null;
+        if (parent !== this.scrollParent) {
+          this.scrollParent?.removeEventListener("scroll", this.onScroll);
+          this.scrollParent = parent;
+          parent.addEventListener("scroll", this.onScroll, { passive: true });
+        }
+        // Where a line wraps, one position is both the end of a row and the
+        // start of the next; assoc says which of the two the caret is drawn
+        // on (the End key puts it on the former).
+        const { head, assoc } = view.state.selection.main;
+        const coords = view.coordsAtPos(head, assoc || 1);
+        if (!coords) return null;
+        return coords.top - parent.getBoundingClientRect().top;
+      }
+
       private measure = {
         key: this,
-        read: (view: EditorView): number | null => {
-          const parent = getScrollParent();
-          if (!parent) return null;
-          if (parent !== this.scrollParent) {
-            this.scrollParent?.removeEventListener("scroll", this.onScroll);
-            this.scrollParent = parent;
-            parent.addEventListener("scroll", this.onScroll, { passive: true });
-          }
-          const coords = view.coordsAtPos(view.state.selection.main.head);
-          if (!coords) return null;
-          return coords.top - parent.getBoundingClientRect().top;
-        },
+        read: (view: EditorView): number | null => this.cursorY(view),
         write: (cursorY: number | null) => {
           const parent = this.scrollParent;
           if (cursorY === null || !parent) return;
 
+          // No keydown came first (dictation, a composition commit): the
+          // best remaining reference is where the cursor is now.
           if (this.anchorY === null) {
             this.anchorY = cursorY;
             return;
@@ -100,6 +118,15 @@ export function typewriterScroll(getScrollParent: () => HTMLElement | null) {
       destroy() {
         this.scrollParent?.removeEventListener("scroll", this.onScroll);
       }
+    },
+    {
+      // An observer, not a handler: observers run ahead of the keymap, and a
+      // handler would never see the keys a binding claims — Enter among them.
+      eventObservers: {
+        keydown() {
+          this.keydown();
+        },
+      },
     },
   );
 }

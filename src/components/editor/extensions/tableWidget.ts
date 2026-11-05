@@ -216,6 +216,9 @@ function attachCellEditing(cell: HTMLElement, getRaw: () => string, setRaw: (tex
       cell.blur();
     } else if (e.key === "Escape") {
       e.preventDefault();
+      // This Escape only cancels the edit. Past the blur below nothing marks
+      // a cell as being edited, so the global handler would exit fullscreen.
+      e.stopPropagation();
       cell.textContent = getRaw();
       cell.blur();
     }

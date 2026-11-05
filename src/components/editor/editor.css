@@ -506,3 +506,12 @@
 .cm-reviewDismiss:hover {
   color: var(--diff-old-text);
 }
+
+/* Blank paper above and below the text in fullscreen, set by
+   useTypewriterOverscroll. On .cm-content rather than the page so CodeMirror
+   measures it, and so a click out there still lands the caret in the text
+   instead of taking focus from the editor. Selector outweighs editorTheme's
+   `.cm-content { padding: 0 }`. */
+.cm-editor .cm-scroller .cm-content {
+  padding-block: var(--typewriter-overscroll, 0);
+}
