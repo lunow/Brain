@@ -5,6 +5,18 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 8
+
+**Fullscreen**
+
+- Typewriter scrolling now holds anywhere on screen. Fullscreen has a
+  screenful of blank paper above and below the text, so even a document's
+  first or last line can be scrolled to wherever you want to write.
+- The active line no longer jumps when the first key you press is Enter.
+- The title bar is hidden.
+- Escape now leaves fullscreen while the cursor is in the document. It used
+  to do nothing there. Escape in a table cell still only cancels the edit.
+
 ## Version 7
 
 **Explore**
