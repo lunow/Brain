@@ -12,6 +12,14 @@ import type { RootFolder } from "./tauri-commands";
 // reference to resolve and open in-app.
 export const SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
+/** Where an autolink's text points: GFM recognizes bare addresses without a
+ *  scheme (`me@example.com`, `www.example.com`), which an opener needs. */
+export function autolinkHref(text: string): string {
+  if (SCHEME_PATTERN.test(text)) return text;
+  if (text.includes("@")) return `mailto:${text}`;
+  return `https://${text}`;
+}
+
 export function dirnameOf(path: string): string {
   const idx = path.lastIndexOf("/");
   return idx > 0 ? path.slice(0, idx) : "/";

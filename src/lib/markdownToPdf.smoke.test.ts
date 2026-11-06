@@ -61,4 +61,13 @@ describe("markdownToPdfBytes", () => {
     const pageMatches = text.match(/\/Type\s*\/Page[^s]/g) ?? [];
     expect(pageMatches.length).toBeGreaterThan(1);
   });
+
+  it("keeps bare and angle-bracket addresses as linked text", () => {
+    const bytes = markdownToPdfBytes("Mail me@example.com or see <https://example.com/x>.", "Links");
+    const text = new TextDecoder("latin1").decode(bytes);
+    expect(text).toContain("(me@example.com)");
+    expect(text).toContain("/URI (mailto:me@example.com)");
+    expect(text).toContain("(https://example.com/x)");
+    expect(text).toContain("/URI (https://example.com/x)");
+  });
 });

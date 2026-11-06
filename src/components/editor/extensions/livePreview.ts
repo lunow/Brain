@@ -8,7 +8,7 @@ import { TableWidget } from "./tableWidget";
 import { collectSmartTypographyDecorations } from "./smartTypographyIntegration";
 import { collectPathLinkDecorations } from "./pathLink";
 import { topLevelBlockAt } from "./paragraphs";
-import { SCHEME_PATTERN } from "@/lib/notePaths";
+import { autolinkHref } from "@/lib/notePaths";
 
 /**
  * WYSIWYG-style "live preview": the document stays plain-text markdown at
@@ -78,14 +78,6 @@ function isLineRangeActive(state: EditorState, from: number, to: number): boolea
     if (range.from <= lineTo && range.to >= lineFrom) return true;
   }
   return false;
-}
-
-/** Where an autolink's text points: GFM recognizes bare addresses without a
- *  scheme (`me@example.com`, `www.example.com`), which the opener needs. */
-function autolinkHref(text: string): string {
-  if (SCHEME_PATTERN.test(text)) return text;
-  if (text.includes("@")) return `mailto:${text}`;
-  return `https://${text}`;
 }
 
 interface PendingDecoration {

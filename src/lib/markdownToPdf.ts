@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { GFM, parser as markdownParser } from "@lezer/markdown";
 import type { SyntaxNode } from "@lezer/common";
+import { autolinkHref } from "./notePaths";
 
 const PAGE_MARGIN = 56;
 
@@ -125,7 +126,15 @@ function pushText(tokens: Token[], text: string, style: Style) {
 
 function renderInlineChild(node: SyntaxNode, source: string, style: Style): Token[] {
   const name = node.type.name;
-  if (name.endsWith("Mark") || name === "URL" || name === "LinkTitle" || name === "CodeInfo") {
+  if (name === "URL") {
+    // Only the `(url)` half of `[text](url)` is syntax. A bare email or web
+    // address (GFM autolinks), or the inside of `<…>`, is the text itself.
+    const parent = node.parent?.name;
+    if (parent === "Link" || parent === "Image") return [];
+    const text = source.slice(node.from, node.to);
+    return [{ type: "word", text, style: { ...style, link: autolinkHref(text) } }];
+  }
+  if (name.endsWith("Mark") || name === "LinkTitle" || name === "CodeInfo") {
     return [];
   }
   if (name === "TaskMarker") {
@@ -141,7 +150,7 @@ function renderInlineChild(node: SyntaxNode, source: string, style: Style): Toke
   if (name === "Emphasis") return collectInlineRuns(node, source, { ...style, italic: true });
   if (name === "StrongEmphasis") return collectInlineRuns(node, source, { ...style, bold: true });
   if (name === "Strikethrough") return collectInlineRuns(node, source, { ...style, strike: true });
-  if (name === "Link" || name === "Autolink") {
+  if (name === "Link") {
     const urlNode = findChild(node, "URL");
     const href = urlNode ? source.slice(urlNode.from, urlNode.to) : "";
     return collectInlineRuns(node, source, { ...style, link: href });
