@@ -22,6 +22,34 @@ import styles from "./FileEditor.module.css";
 import type { FsChangedPayload } from "@/hooks/useFsWatcher";
 
 const AUTOSAVE_DELAY_MS = 1500;
+const SETTLE_DELAY_MS = 150;
+const SETTLE_MAX_READS = 6;
+
+/**
+ * Reads a file another program is writing, once it has stopped changing.
+ * Most writers truncate the file and then fill it, and a watcher event can
+ * land in between: adopting that read showed an empty or cut-off document,
+ * which collapsed the scroll range and left the editor at the top of the
+ * file once the full text arrived. Two identical reads a moment apart mean
+ * the write is done. Returns null if the file can't be read (an atomic save
+ * mid-rename, a deletion) — there's nothing to adopt then.
+ */
+async function readSettledFile(path: string): Promise<string | null> {
+  let previous: string | null = null;
+  for (let i = 0; i < SETTLE_MAX_READS; i++) {
+    if (i > 0) await new Promise((resolve) => setTimeout(resolve, SETTLE_DELAY_MS));
+    let current: string;
+    try {
+      current = await readFile(path);
+    } catch {
+      previous = null;
+      continue;
+    }
+    if (current === previous) return current;
+    previous = current;
+  }
+  return previous;
+}
 
 export function FileEditor() {
   const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
@@ -76,7 +104,15 @@ export function FileEditor() {
   });
 
   const [dirty, setDirty] = useState(false);
-  const [conflict, setConflict] = useState(false);
+  const [conflict, setConflictState] = useState(false);
+  // Autosave holds off while the conflict banner is up: writing the local
+  // text would silently overwrite the external change before the user has
+  // picked "Reload" or "Keep mine", leaving Reload nothing to reload.
+  const conflictRef = useRef(false);
+  function setConflict(value: boolean) {
+    conflictRef.current = value;
+    setConflictState(value);
+  }
   // Fresh on-disk content handed to the live editor to patch in place. The
   // editor is deliberately NOT remounted for this: a remount builds a new
   // EditorView and so resets the scroll position to the top of the file.
@@ -87,35 +123,28 @@ export function FileEditor() {
   const pendingContent = useRef<string | null>(null);
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
-  // Mirrors the latest loaded content for the fs listener below. That
-  // listener deliberately doesn't re-subscribe when the content changes, so
-  // reading `initialContent` from its closure froze it at whatever was
-  // loaded when selectedFilePath last changed. After adopting an external
-  // change, the frozen value was the file's ORIGINAL text — so if the file
-  // was then reverted on disk (git checkout, undo in another editor), the
-  // revert compared equal to that stale value and was discarded, leaving
-  // the editor showing the superseded text and ready to save it back over
-  // the revert. A ref is read at call time and cannot go stale.
-  const initialContentRef = useRef(initialContent);
-  initialContentRef.current = initialContent;
-  // Content of the last write this app made to selectedFilePath. The fs
-  // watcher reports our own autosave writes as filesystem events (with a
-  // ~400ms debounce delay), so relying on the `dirty` flag alone to decide
-  // "is this an external change" races against the user resuming typing in
-  // that window. Comparing against exactly what we wrote lets us recognize
-  // and ignore that echo regardless of dirty/timing.
-  const lastWrittenContent = useRef<string | null>(null);
+  // What we believe is on disk for selectedFilePath right now: the text the
+  // file was loaded with, then whatever we last wrote or adopted. A disk read
+  // is only an external change if it differs from THIS. The watcher reports
+  // events that aren't changes at all — our own autosave echoing back ~400ms
+  // later, or a file created moments ago still reporting its creation after
+  // the user has started typing — and treating every event on a dirty file
+  // as a conflict raised the "changed on disk" banner for files nobody else
+  // had touched.
+  const diskContent = useRef<string | null>(null);
 
   const saveMutation = useMutation({
     mutationFn: async (path: string) => {
-      if (pendingContent.current === null) return undefined;
+      if (pendingContent.current === null || conflictRef.current) return undefined;
       const content = pendingContent.current;
+      // Recorded before the write, not after: a read racing the write (a
+      // window-focus refetch) must already recognize these bytes as ours.
+      diskContent.current = content;
       await writeFile(path, content);
       return content;
     },
     onSuccess: (writtenContent) => {
       if (writtenContent === undefined) return;
-      lastWrittenContent.current = writtenContent;
       // Only clear dirty if no newer edit arrived while this write was in
       // flight — otherwise we'd clobber the dirty flag for unsaved content
       // a later autosave timer is already scheduled to pick up.
@@ -150,7 +179,7 @@ export function FileEditor() {
     setConflict(false);
     setExternalReload(null);
     pendingContent.current = null;
-    lastWrittenContent.current = null;
+    diskContent.current = null;
   }, [selectedFilePath]);
 
   // Read back a saved review sidecar the first time a file is opened this
@@ -179,15 +208,32 @@ export function FileEditor() {
     });
   }, [selectedFilePath, initialContent]);
 
-  // External-change detection for the currently open file. If it has no
-  // unsaved edits, silently fold the new content into the live document (see
-  // MarkdownEditor's externalReload) so the user keeps their scroll position,
-  // cursor and undo history; if it does have unsaved edits, surface a conflict
-  // banner rather than clobbering local changes. We always read the fresh
-  // content first and compare it against lastWrittenContent — the exact bytes
-  // of our own last autosave — so an echo of our own write is recognized and
-  // ignored outright, even if the user resumed typing (and dirty flipped
-  // back to true) in the ~400ms the fs watcher takes to report it.
+  // External-change detection for the currently open file. Every read of the
+  // file lands in the fileContent query — the initial load, a background
+  // refetch (window focus, reopening a cached file) and the fs listener
+  // below — so this one effect sees them all. A read matching diskContent is
+  // nothing new. Otherwise, with no unsaved edits the new content is folded
+  // into the live document (see MarkdownEditor's externalReload) so the user
+  // keeps their scroll position, cursor and undo history; with unsaved edits
+  // a conflict banner is raised rather than clobbering local changes.
+  useEffect(() => {
+    if (!selectedFilePath || initialContent === undefined) return;
+    if (diskContent.current === null) {
+      diskContent.current = initialContent;
+      return;
+    }
+    if (initialContent === diskContent.current) return;
+    diskContent.current = initialContent;
+
+    if (dirtyRef.current) {
+      // Disk already holds exactly the unsaved text: nothing is in conflict.
+      if (initialContent !== pendingContent.current) setConflict(true);
+      return;
+    }
+    pendingContent.current = null;
+    setExternalReload((prev) => ({ text: initialContent, token: (prev?.token ?? 0) + 1 }));
+  }, [selectedFilePath, initialContent]);
+
   useEffect(() => {
     if (!selectedFilePath) return;
     let disposed = false;
@@ -196,20 +242,9 @@ export function FileEditor() {
       if (disposed) return;
       if (!event.payload.paths.includes(selectedFilePath)) return;
 
-      queryClient.invalidateQueries({ queryKey: ["fileContent", selectedFilePath] }).then(() => {
-        if (disposed) return;
-        const freshContent = queryClient.getQueryData<string>(["fileContent", selectedFilePath]);
-        if (freshContent === lastWrittenContent.current) return;
-
-        if (dirtyRef.current) {
-          setConflict(true);
-          return;
-        }
-
-        const knownContent = pendingContent.current ?? initialContentRef.current;
-        if (freshContent === knownContent || freshContent === undefined) return;
-        pendingContent.current = null;
-        setExternalReload((prev) => ({ text: freshContent, token: (prev?.token ?? 0) + 1 }));
+      readSettledFile(selectedFilePath).then((freshContent) => {
+        if (disposed || freshContent === null) return;
+        queryClient.setQueryData(["fileContent", selectedFilePath], freshContent);
       });
     });
 
@@ -217,10 +252,6 @@ export function FileEditor() {
       disposed = true;
       unlistenPromise.then((unlisten) => unlisten());
     };
-    // initialContent intentionally omitted: it changes every reload and
-    // would otherwise force this listener to resubscribe each time. It is
-    // read through initialContentRef instead, which stays current.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilePath, queryClient]);
 
   function handleExport(kind: ExportKind) {
@@ -229,13 +260,24 @@ export function FileEditor() {
 
   async function discardAndReload() {
     if (!selectedFilePath) return;
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
     setConflict(false);
     setDirty(false);
     pendingContent.current = null;
-    await queryClient.invalidateQueries({ queryKey: ["fileContent", selectedFilePath] });
-    const freshContent = queryClient.getQueryData<string>(["fileContent", selectedFilePath]);
-    if (freshContent === undefined) return;
+    const freshContent = await readSettledFile(selectedFilePath);
+    if (freshContent === null) return;
+    diskContent.current = freshContent;
+    queryClient.setQueryData(["fileContent", selectedFilePath], freshContent);
     setExternalReload((prev) => ({ text: freshContent, token: (prev?.token ?? 0) + 1 }));
+  }
+
+  function keepMine() {
+    setConflict(false);
+    // The autosave that came due while the banner was up was skipped.
+    if (selectedFilePath) saveMutation.mutate(selectedFilePath);
   }
 
   // Explore mode takes over the pane, and unlike the others it works with no
@@ -303,7 +345,7 @@ export function FileEditor() {
               </button>
               <button
                 type="button"
-                onClick={() => setConflict(false)}
+                onClick={keepMine}
                 title="Dismiss this notice and keep your local changes"
               >
                 Keep mine
