@@ -5,6 +5,28 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 9
+
+**Editor**
+
+- A new A4 width shows the document at the width of a printed page, with
+  its length in pages next to the width buttons. The count uses the PDF
+  export's own layout, without images or diagrams. A4 is in the toolbar
+  and the `⌘K` palette.
+- Email addresses and bare web addresses stay visible as you type them.
+  They used to vanish as soon as they were recognized as links. They now
+  show as links and open with ⌘-click.
+
+**Files changed by other programs**
+
+- When another program rewrites the open file, the new text comes in
+  where you are. The editor no longer jumps to the top of the file.
+- The "changed on disk" notice only appears when the file really changed.
+  It sometimes appeared on the first edit of a file nobody else had
+  touched.
+- While that notice is up, nothing is saved, so "Reload" really does bring
+  in the other program's version. "Keep mine" saves your text.
+
 ## Version 8
 
 **Fullscreen**
