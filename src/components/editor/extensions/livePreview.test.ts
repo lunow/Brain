@@ -45,3 +45,43 @@ describe("blank-line decorations", () => {
     expect(blankLines(state)).toEqual(["3:cm-mkBlank cm-mkGapTight"]);
   });
 });
+
+/** The text left visible once the replace decorations are applied. */
+function visibleText(state: EditorState): string {
+  let text = state.doc.toString();
+  const hidden: [number, number][] = [];
+  state.field(livePreviewField).between(0, state.doc.length, (from, to, deco) => {
+    if ((deco.spec as { widget?: unknown }).widget === undefined && deco.point) hidden.push([from, to]);
+  });
+  for (const [from, to] of hidden.reverse()) text = text.slice(0, from) + text.slice(to);
+  return text;
+}
+
+/** data-href of each link decoration, in document order. */
+function linkHrefs(state: EditorState): string[] {
+  const out: string[] = [];
+  state.field(livePreviewField).between(0, state.doc.length, (_from, _to, deco) => {
+    const href = (deco.spec as { attributes?: Record<string, string> }).attributes?.["data-href"];
+    if (href) out.push(href);
+  });
+  return out;
+}
+
+describe("links", () => {
+  it("keeps a bare email visible and links it via mailto", () => {
+    const state = stateOf("Write to me@example.com today", 0);
+    expect(visibleText(state)).toBe("Write to me@example.com today");
+    expect(linkHrefs(state)).toEqual(["mailto:me@example.com"]);
+  });
+
+  it("keeps bare and angle-bracket URLs visible, hiding only the brackets", () => {
+    expect(visibleText(stateOf("see www.example.com", 0))).toBe("see www.example.com");
+    expect(visibleText(stateOf("see <https://example.com>", 0))).toBe("see https://example.com");
+  });
+
+  it("still hides the url half of a markdown link", () => {
+    const state = stateOf("a [site](https://example.com) b", 0);
+    expect(visibleText(state)).toBe("a site b");
+    expect(linkHrefs(state)).toEqual(["https://example.com"]);
+  });
+});

@@ -8,6 +8,7 @@ import { TableWidget } from "./tableWidget";
 import { collectSmartTypographyDecorations } from "./smartTypographyIntegration";
 import { collectPathLinkDecorations } from "./pathLink";
 import { topLevelBlockAt } from "./paragraphs";
+import { SCHEME_PATTERN } from "@/lib/notePaths";
 
 /**
  * WYSIWYG-style "live preview": the document stays plain-text markdown at
@@ -77,6 +78,14 @@ function isLineRangeActive(state: EditorState, from: number, to: number): boolea
     if (range.from <= lineTo && range.to >= lineFrom) return true;
   }
   return false;
+}
+
+/** Where an autolink's text points: GFM recognizes bare addresses without a
+ *  scheme (`me@example.com`, `www.example.com`), which the opener needs. */
+function autolinkHref(text: string): string {
+  if (SCHEME_PATTERN.test(text)) return text;
+  if (text.includes("@")) return `mailto:${text}`;
+  return `https://${text}`;
 }
 
 interface PendingDecoration {
@@ -345,8 +354,26 @@ function buildDecorations(state: EditorState): DecorationSet {
         return;
       }
 
-      if (type === "LinkMark" || type === "URL") {
-        if (type === "URL") smartTextExcluded.push({ from: node.from, to: node.to });
+      if (type === "URL") {
+        smartTextExcluded.push({ from: node.from, to: node.to });
+        // Only the `(url)` half of `[text](url)` is syntax. A URL anywhere
+        // else — a bare email or web address (GFM autolinks), or the inside
+        // of `<…>` — IS the text: hiding it made an email vanish as it was
+        // typed. Render it as a link to itself instead.
+        const parent = node.node.parent?.name;
+        if (parent === "Link" || parent === "Image") {
+          hideMark(node);
+          return;
+        }
+        const href = autolinkHref(state.doc.sliceString(node.from, node.to));
+        pending.push({
+          from: node.from,
+          to: node.to,
+          deco: Decoration.mark({ class: "cm-mkLink", attributes: { "data-href": href, title: "⌘-click to open" } }),
+        });
+        return;
+      }
+      if (type === "LinkMark") {
         hideMark(node);
         return;
       }
