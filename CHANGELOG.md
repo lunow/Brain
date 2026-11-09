@@ -5,6 +5,46 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 10
+
+**A4 pages**
+
+- The A4 width now shows the document as separate sheets of paper, with
+  the canvas between them, instead of a page count in the toolbar. Pages
+  break between paragraphs the way the PDF export lays them out; a
+  paragraph that doesn't fit moves to the next sheet whole.
+- The A4 sheet keeps its width in a narrow window and scrolls sideways
+  instead of shrinking. Wide tables stay inside the sheet.
+
+**Colors**
+
+- Custom colors: pick a background (presets, a color picker or a hex
+  value) and set the text contrast, with its WCAG rating shown as you
+  drag. Switch them on and off with `⇧⌘B`.
+- Settings now open with `⌘,` and from the `⌘K` palette.
+
+**Picking up where you left off**
+
+- Brain reopens the folder and file you had open when you quit, scrolled
+  to the same place, at the same width.
+- A remembered file that was deleted or moved since goes back to "Select
+  a file" instead of loading forever.
+- Every other file you open starts at the top.
+
+**Toolbar and fullscreen**
+
+- In a narrow window the toolbar's Layout, Mode and View buttons fold
+  into dropdown menus instead of squeezing into each other.
+- Clicking the blank canvas or the sheet's margins puts the cursor in
+  the nearest spot in the text.
+- In fullscreen the blank space above and below the text is canvas, so
+  the sheet keeps its own size.
+
+**PDF export**
+
+- Bare email addresses and web addresses are exported as clickable
+  links.
+
 ## Version 9
 
 **Editor**
