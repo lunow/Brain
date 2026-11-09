@@ -9,6 +9,7 @@ import { useFileOperations } from "@/hooks/useFileOperations";
 import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import { useFsWatcher } from "@/hooks/useFsWatcher";
 import { useApplyFontScale } from "@/hooks/useApplyFontScale";
+import { useApplyCustomColors } from "@/hooks/useApplyCustomColors";
 import { useCliOpenFolder } from "@/hooks/useCliOpenFolder";
 import { useWindowTitle } from "@/hooks/useWindowTitle";
 import { useSettingsStore } from "@/stores/settings";
@@ -26,6 +27,7 @@ function App() {
   useGlobalShortcuts();
   useFsWatcher();
   useApplyFontScale();
+  useApplyCustomColors();
   useCliOpenFolder();
   useWindowTitle();
   const { moveMutation } = useFileOperations();

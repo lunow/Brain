@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { markdownPageCount, markdownToPdfBytes } from "./markdownToPdf";
+import { markdownToPdfBytes } from "./markdownToPdf";
 
 const SAMPLE = `---
 title: Ignored
@@ -60,21 +60,5 @@ describe("markdownToPdfBytes", () => {
     const text = new TextDecoder("latin1").decode(bytes);
     const pageMatches = text.match(/\/Type\s*\/Page[^s]/g) ?? [];
     expect(pageMatches.length).toBeGreaterThan(1);
-  });
-});
-
-describe("markdownPageCount", () => {
-  it("counts the last page by how full it is", () => {
-    const paragraph = "A sentence of ordinary length that runs on for a while. ".repeat(20);
-    const oneParagraph = markdownPageCount(paragraph);
-    expect(oneParagraph).toBeGreaterThan(0);
-    expect(oneParagraph).toBeLessThan(1);
-  });
-
-  it("matches the number of pages the export produces", () => {
-    const long = "A sentence of ordinary length that runs on for a while.\n\n".repeat(200);
-    const exported = new TextDecoder("latin1").decode(markdownToPdfBytes(long, "t"));
-    const pages = exported.match(/\/Type \/Page\b(?!s)/g)?.length;
-    expect(Math.ceil(markdownPageCount(long))).toBe(pages);
   });
 });

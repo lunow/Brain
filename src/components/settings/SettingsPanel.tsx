@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { useUiStore } from "@/stores/ui";
 import { useSettingsStore } from "@/stores/settings";
+import { AppearanceSettings } from "./AppearanceSettings";
 import styles from "./SettingsPanel.module.css";
 
 /**
- * OpenRouter API key + default model, opened from the Ideate/Review sidebar
- * headers. Persisted via src-tauri/src/commands/settings.rs (a plaintext
+ * Custom colors (background + text contrast), OpenRouter API key and default
+ * model. Opened with Cmd+Comma, the command palette, or the Ideate/Review
+ * sidebar headers. Persisted via src-tauri/src/commands/settings.rs (a plaintext
  * JSON store — same trust model as the workspace-roots store).
  */
 export function SettingsPanel() {
@@ -36,6 +38,7 @@ export function SettingsPanel() {
       <div className={styles.panel} role="dialog" aria-modal="true" aria-label="Settings">
         <div className={styles.title}>Settings</div>
         <div className={styles.body}>
+          <AppearanceSettings />
           <div className={styles.field}>
             <label className={styles.label} htmlFor="openrouter-api-key">
               OpenRouter API key

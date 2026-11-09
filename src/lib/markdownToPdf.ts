@@ -512,14 +512,6 @@ export function markdownToPdfBytes(markdown: string, title: string): Uint8Array 
   return new Uint8Array(doc.output("arraybuffer"));
 }
 
-/** How many pages the export of this document fills, counting the last one
- *  by how far down its text area the content reached. */
-export function markdownPageCount(markdown: string): number {
-  const { doc, ctx } = layoutDocument(markdown);
-  const lastPageFill = (ctx.y - PAGE_MARGIN) / (ctx.pageHeight - 2 * PAGE_MARGIN);
-  return doc.getNumberOfPages() - 1 + lastPageFill;
-}
-
 function layoutDocument(markdown: string): { doc: jsPDF; ctx: Ctx } {
   const source = stripFrontmatter(markdown);
   const tree = markdownParser.configure([GFM]).parse(source);

@@ -65,6 +65,9 @@ export interface CommandContext {
   treeVisible: boolean;
   fileListVisible: boolean;
   rightSidebarVisible: boolean;
+  customColorsEnabled: boolean;
+  toggleCustomColors: () => void;
+  openSettings: () => void;
   /** Already bound to the current selected folder (a no-op if none). */
   createFile: () => void;
   /** Already bound to the current selected folder (a no-op if none). */
@@ -125,6 +128,15 @@ export function buildCommands(ctx: CommandContext): CommandResult[] {
     { type: "command", id: "width-normal", section: "View", label: "Normal Width", hint: "⇧⌘2", run: () => ctx.setWidthPreset("normal") },
     { type: "command", id: "width-full", section: "View", label: "Full Width", hint: "⇧⌘3", run: () => ctx.setWidthPreset("full") },
     { type: "command", id: "width-a4", section: "View", label: "A4 Page Width", run: () => ctx.setWidthPreset("a4") },
+    {
+      type: "command",
+      id: "toggle-custom-colors",
+      section: "View",
+      label: ctx.customColorsEnabled ? "Disable Custom Colors" : "Enable Custom Colors",
+      hint: "⇧⌘B",
+      run: ctx.toggleCustomColors,
+    },
+    { type: "command", id: "open-settings", section: "View", label: "Settings…", hint: "⌘,", run: ctx.openSettings },
     { type: "command", id: "export-pdf", section: "Export", label: "Export as PDF", run: () => ctx.requestExport("pdf") },
     { type: "command", id: "export-word", section: "Export", label: "Export as Word", run: () => ctx.requestExport("word") },
     { type: "command", id: "export-publish", section: "Export", label: "Publish", run: () => ctx.requestExport("publish") },

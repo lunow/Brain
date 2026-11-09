@@ -4,6 +4,7 @@
   z-index: 1000;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   padding-top: 12vh;
   background: rgba(0, 0, 0, 0.25);
 }
@@ -80,4 +81,131 @@
 
 .doneButton:hover {
   background: var(--bg-active);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kbd {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--bg-active);
+  border: 1px solid var(--border-hairline);
+  transition: background 120ms;
+}
+
+.switch[data-on="true"] {
+  background: var(--text-primary);
+}
+
+.switchKnob {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-panel);
+  transition: transform 120ms;
+}
+
+.switch[data-on="true"] .switchKnob {
+  transform: translateX(14px);
+}
+
+.label {
+  display: flex;
+  justify-content: space-between;
+}
+
+.labelValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+
+.swatchRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--border-hairline);
+}
+
+.swatch[data-selected="true"] {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+}
+
+.colorInput {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  padding: 0;
+  border: 1px dashed var(--text-tertiary);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.colorInput::-webkit-color-swatch-wrapper {
+  padding: 3px;
+}
+
+.colorInput::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.hexInput {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.range {
+  width: 100%;
+  accent-color: var(--text-primary);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
 }

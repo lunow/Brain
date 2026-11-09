@@ -283,6 +283,12 @@
   background: var(--bg-panel);
 }
 
+/* On paper a table can't hang off the sheet: A4 keeps it inside the text
+   area, scrolling within its own box if it's wider. */
+[data-width="a4"] .cm-mkTableContainer {
+  max-width: 100%;
+}
+
 .cm-mkTable {
   /* Columns size to content (not squeezed to fit, and not stretched to fill
      the pane either — a short table just sits at its natural width). Wider
@@ -507,11 +513,17 @@
   color: var(--diff-old-text);
 }
 
-/* Blank paper above and below the text in fullscreen, set by
-   useTypewriterOverscroll. On .cm-content rather than the page so CodeMirror
-   measures it, and so a click out there still lands the caret in the text
-   instead of taking focus from the editor. Selector outweighs editorTheme's
-   `.cm-content { padding: 0 }`. */
-.cm-editor .cm-scroller .cm-content {
-  padding-block: var(--typewriter-overscroll, 0);
+/* Page breaks on the A4 preset (extensions/pagination.ts). The widget is as
+   tall as the rest of the page plus both margins and the gap; the gap itself
+   is painted in the canvas colour across the sheet's full width, reaching
+   out over the sheet's side padding (--a4-margin, see .widthContainer). */
+.cm-pageBreak {
+  position: relative;
+}
+
+.cm-pageGap {
+  position: absolute;
+  left: calc(-1 * var(--a4-margin));
+  right: calc(-1 * var(--a4-margin));
+  background: var(--bg-app);
 }

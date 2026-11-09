@@ -1,5 +1,38 @@
 import { create } from "zustand";
 
+/* The folder and file open when the app last closed, so a restart lands on
+   the same page. localStorage like the panel layout: per machine. */
+const LAST_OPENED_STORAGE_KEY = "write:lastOpened";
+
+interface LastOpened {
+  folder: string | null;
+  file: string | null;
+}
+
+function loadLastOpened(): LastOpened {
+  try {
+    const raw = localStorage.getItem(LAST_OPENED_STORAGE_KEY);
+    if (!raw) return { folder: null, file: null };
+    const parsed = JSON.parse(raw) as Partial<LastOpened>;
+    return {
+      folder: typeof parsed.folder === "string" ? parsed.folder : null,
+      file: typeof parsed.file === "string" ? parsed.file : null,
+    };
+  } catch {
+    return { folder: null, file: null };
+  }
+}
+
+function saveLastOpened(lastOpened: LastOpened) {
+  try {
+    localStorage.setItem(LAST_OPENED_STORAGE_KEY, JSON.stringify(lastOpened));
+  } catch {
+    // Storage unavailable — the app just starts with nothing open.
+  }
+}
+
+const lastOpened = loadLastOpened();
+
 interface WorkspaceState {
   /** Expand state for the folder/file tree in the Content column. */
   expandedFileTreePaths: Set<string>;
@@ -23,10 +56,10 @@ interface WorkspaceState {
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
-  selectedFolderPath: null,
+  selectedFolderPath: lastOpened.folder,
   selectFolder: (path) => set({ selectedFolderPath: path, selectedFilePath: null }),
 
-  selectedFilePath: null,
+  selectedFilePath: lastOpened.file,
   selectFile: (path) => set({ selectedFilePath: path }),
 
   expandedFileTreePaths: new Set(),
@@ -65,3 +98,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   startRename: (path) => set({ renamingPath: path }),
   stopRename: () => set({ renamingPath: null }),
 }));
+
+useWorkspaceStore.subscribe((state, prev) => {
+  if (state.selectedFolderPath === prev.selectedFolderPath && state.selectedFilePath === prev.selectedFilePath) return;
+  saveLastOpened({ folder: state.selectedFolderPath, file: state.selectedFilePath });
+});

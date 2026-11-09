@@ -14,9 +14,10 @@ import { frontmatterExtension } from "./extensions/frontmatter";
 import { editorTheme } from "./extensions/theme";
 import { reviewSuggestionsExtension, setSuggestionsEffect, type SuggestionAction } from "./extensions/reviewSuggestions";
 import { typewriterScroll } from "./extensions/typewriterScroll";
+import { pagination, setPaged } from "./extensions/pagination";
+import { restoreScroll, type ScrollAnchor } from "./scrollMemory";
 import { externalReloadAnnotation, minimalReplacement } from "./externalSync";
 import type { PlacedSuggestion } from "@/lib/reviewSuggestions";
-import { useUiStore } from "@/stores/ui";
 import "./editor.css";
 import styles from "./MarkdownEditor.module.css";
 
@@ -41,6 +42,11 @@ interface MarkdownEditorProps {
    *  the typewriter-scroll extension. Read fresh on every relevant update
    *  rather than captured once, so it doesn't need to be a dependency. */
   scrollParentRef?: RefObject<HTMLElement | null>;
+  /** Lay the text out on separate A4 sheets (the A4 width preset). */
+  paged?: boolean;
+  /** Scroll to this point once the editor is up (the app restarting on the
+   *  file it closed with). Read once at mount. */
+  initialScroll?: Pick<ScrollAnchor, "pos" | "offset"> | null;
 }
 
 /**
@@ -60,6 +66,8 @@ export function MarkdownEditor({
   onResolveSuggestion,
   onViewReady,
   scrollParentRef,
+  paged = false,
+  initialScroll = null,
 }: MarkdownEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -87,13 +95,14 @@ export function MarkdownEditor({
         reviewSuggestionsExtension((id, action) => onResolveSuggestionRef.current?.(id, action)),
         EditorView.updateListener.of((update) => {
           if (!update.docChanged) return;
-          useUiStore.getState().bumpDocumentRevision();
           // A reload from disk is not a user edit: reporting it would mark the
           // file dirty and schedule an autosave of what we just read back.
           if (update.transactions.some((tr) => tr.annotation(externalReloadAnnotation))) return;
           onChangeRef.current(update.state.doc.toString());
         }),
         typewriterScroll(() => scrollParentRef?.current ?? null),
+        pagination(paged),
+        initialScroll ? restoreScroll(initialScroll, () => scrollParentRef?.current ?? null) : [],
       ],
     });
 
@@ -110,6 +119,13 @@ export function MarkdownEditor({
     // parent via a `key` prop rather than syncing `content` into this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const appliedPaged = useRef(paged);
+  useEffect(() => {
+    if (paged === appliedPaged.current) return;
+    appliedPaged.current = paged;
+    viewRef.current?.dispatch({ effects: setPaged.of(paged) });
+  }, [paged]);
 
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setSuggestionsEffect.of(suggestions) });

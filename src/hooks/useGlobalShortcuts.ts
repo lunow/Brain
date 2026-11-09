@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useUiStore, hasRightSidebar } from "@/stores/ui";
+import { useAppearanceStore } from "@/stores/appearance";
 import { useFileOperations } from "./useFileOperations";
 
 /**
@@ -8,6 +9,7 @@ import { useFileOperations } from "./useFileOperations";
  * Cmd+W (close file), Shift+Cmd+R (rename selected file, else folder), Cmd+1/2/3/4 (writing mode:
  * Ideate/Explore/Write/Review), Cmd+Shift+1/2/3 (width presets), Cmd+D/Shift+Cmd+D (toggle Workspaces/
  * Content columns), Cmd+J (toggle right sidebar, in the modes that have one), Shift+Cmd+F (toggle fullscreen),
+ * Shift+Cmd+B (toggle custom background/contrast colors), Cmd+Comma (Settings),
  * Escape (exit fullscreen), Cmd+Plus/Minus/0 (app font scale — deliberately NOT
  * the WKWebView's own pinch/Cmd-zoom, which would zoom UI chrome and prose
  * together at a fixed native step; this scales the app's own rem tokens).
@@ -33,6 +35,9 @@ export function useGlobalShortcuts() {
   const toggleFullscreen = useUiStore((s) => s.toggleFullscreen);
   const exitFullscreen = useUiStore((s) => s.exitFullscreen);
   const commandPaletteOpen = useUiStore((s) => s.commandPaletteOpen);
+  const settingsOpen = useUiStore((s) => s.settingsOpen);
+  const openSettings = useUiStore((s) => s.openSettings);
+  const toggleCustomColors = useAppearanceStore((s) => s.toggleCustomColors);
   const { createFileMutation, createFolderMutation } = useFileOperations();
 
   useEffect(() => {
@@ -44,7 +49,7 @@ export function useGlobalShortcuts() {
         // currently the intended target of Escape — otherwise dismissing
         // one of them would also silently kick the user out of fullscreen.
         const tableContextMenuOpen = !!document.querySelector("[data-table-menu]");
-        if (fullscreenActive && !commandPaletteOpen && !tableContextMenuOpen) {
+        if (fullscreenActive && !commandPaletteOpen && !settingsOpen && !tableContextMenuOpen) {
           exitFullscreen();
         }
         return;
@@ -85,6 +90,13 @@ export function useGlobalShortcuts() {
         // change what the next mode switch shows.
         e.preventDefault();
         if (hasRightSidebar(writingMode)) toggleRightSidebarVisible();
+      } else if (key === "b" && e.shiftKey) {
+        // Shift+Cmd+B: Cmd+B alone is bold in the editor.
+        e.preventDefault();
+        toggleCustomColors();
+      } else if (e.key === ",") {
+        e.preventDefault();
+        openSettings();
       } else if (key === "f" && e.shiftKey) {
         e.preventDefault();
         toggleFullscreen();
@@ -141,6 +153,9 @@ export function useGlobalShortcuts() {
     toggleFullscreen,
     exitFullscreen,
     commandPaletteOpen,
+    settingsOpen,
+    openSettings,
+    toggleCustomColors,
     incrementFontScale,
     decrementFontScale,
     resetFontScale,

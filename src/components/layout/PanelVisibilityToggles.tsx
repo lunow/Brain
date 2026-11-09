@@ -1,5 +1,6 @@
 import { useUiStore, hasRightSidebar } from "@/stores/ui";
 import { ToggleFoldersIcon, ToggleFilesIcon, ToggleSidebarIcon, FullscreenIcon } from "@/components/common/icons";
+import { Menu, useCompactToolbar, type MenuItem } from "@/components/common/Menu";
 import styles from "./PanelVisibilityToggles.module.css";
 
 /** Small icon buttons that show/hide the tree, file list, and (when
@@ -17,6 +18,32 @@ export function PanelVisibilityToggles() {
   const writingMode = useUiStore((s) => s.writingMode);
   const fullscreenActive = useUiStore((s) => s.fullscreenActive);
   const toggleFullscreen = useUiStore((s) => s.toggleFullscreen);
+
+  if (useCompactToolbar()) {
+    const items: MenuItem[] = [
+      { key: "tree", label: "Workspaces", hint: "⌘D", checked: treeVisible, onSelect: toggleTreeVisible, keepOpen: true },
+      {
+        key: "files",
+        label: "Content",
+        hint: "⇧⌘D",
+        checked: fileListVisible,
+        onSelect: toggleFileListVisible,
+        keepOpen: true,
+      },
+    ];
+    if (hasRightSidebar(writingMode)) {
+      items.push({
+        key: "sidebar",
+        label: "Sidebar",
+        hint: "⌘J",
+        checked: rightSidebarVisible,
+        onSelect: toggleRightSidebarVisible,
+        keepOpen: true,
+      });
+    }
+    items.push({ key: "fullscreen", label: "Fullscreen", hint: "⇧⌘F", checked: fullscreenActive, onSelect: toggleFullscreen });
+    return <Menu trigger={<ToggleFoldersIcon />} label="Layout" align="left" items={items} />;
+  }
 
   return (
     <div className={styles.group}>

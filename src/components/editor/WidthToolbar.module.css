@@ -8,7 +8,9 @@
      header rows read as one band across the window. */
   padding: 0 var(--panel-pad-x);
   border-bottom: 1px solid var(--border-hairline);
+  position: relative;
 }
+
 
 /* Left and right sections both grow equally so the .center section between
    them lands in the true middle of the row, regardless of how much content
@@ -43,14 +45,6 @@
   opacity: 1;
 }
 
-.pages {
-  flex-shrink: 0;
-  white-space: nowrap;
-  font-size: var(--type-ui-label);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-tertiary);
-}
-
 .group {
   display: flex;
   gap: 2px;
@@ -81,4 +75,22 @@
 .option:disabled {
   color: var(--text-tertiary);
   pointer-events: none;
+}
+
+/* The row as it would be with every bar expanded, laid out at its natural
+   width for WidthToolbar to measure. Never seen or reachable.
+   Last in the file so `flex: none` outranks .side's `flex: 1`. */
+.measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.measure > * {
+  flex: none;
 }

@@ -8,6 +8,7 @@ import {
   pickFolder,
 } from "@/lib/tauri-commands";
 import { useUiStore } from "@/stores/ui";
+import { useAppearanceStore } from "@/stores/appearance";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { useExport } from "@/hooks/useExport";
@@ -36,6 +37,9 @@ export function CommandPalette() {
   const toggleFileListVisible = useUiStore((s) => s.toggleFileListVisible);
   const rightSidebarVisible = useUiStore((s) => s.rightSidebarVisible);
   const toggleRightSidebarVisible = useUiStore((s) => s.toggleRightSidebarVisible);
+  const openSettings = useUiStore((s) => s.openSettings);
+  const customColorsEnabled = useAppearanceStore((s) => s.enabled);
+  const toggleCustomColors = useAppearanceStore((s) => s.toggleCustomColors);
 
   const selectedFolderPath = useWorkspaceStore((s) => s.selectedFolderPath);
   const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
@@ -106,6 +110,9 @@ export function CommandPalette() {
         treeVisible,
         fileListVisible,
         rightSidebarVisible,
+        customColorsEnabled,
+        toggleCustomColors,
+        openSettings,
         createFile: () => selectedFolderPath && createFileMutation.mutate(selectedFolderPath),
         createFolder: () => selectedFolderPath && createFolderMutation.mutate(selectedFolderPath),
         addRoot: () => addRoot.mutate(),
@@ -120,7 +127,7 @@ export function CommandPalette() {
     // Mutation/store action functions are stable across renders; only their
     // captured values need to retrigger a rebuild.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedFolderPath, selectedFilePath, treeVisible, fileListVisible, rightSidebarVisible],
+    [selectedFolderPath, selectedFilePath, treeVisible, fileListVisible, rightSidebarVisible, customColorsEnabled],
   );
 
   const groups = useMemo(

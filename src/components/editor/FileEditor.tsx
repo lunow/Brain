@@ -15,6 +15,7 @@ import { GraphView } from "@/components/graph/GraphView";
 import { ColumnResizer } from "@/components/layout/ColumnResizer";
 import { PanelVisibilityToggles } from "@/components/layout/PanelVisibilityToggles";
 import { useTypewriterOverscroll } from "./useTypewriterOverscroll";
+import { captureScrollAnchor, loadScrollAnchor, saveScrollAnchor } from "./scrollMemory";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { WidthToolbar } from "./WidthToolbar";
 import type { ExportKind } from "./ExportMenu";
@@ -22,6 +23,11 @@ import styles from "./FileEditor.module.css";
 import type { FsChangedPayload } from "@/hooks/useFsWatcher";
 
 const AUTOSAVE_DELAY_MS = 1500;
+const SCROLL_SAVE_DELAY_MS = 250;
+
+/** Where the file the app last closed on was scrolled to. Used once, for the
+ *  first editor that opens after launch; every later file opens at the top. */
+let startupScroll = loadScrollAnchor();
 const SETTLE_DELAY_MS = 150;
 const SETTLE_MAX_READS = 6;
 
@@ -97,11 +103,17 @@ export function FileEditor() {
   const activeEditorView = useUiStore((s) => s.activeEditorView);
   const setActiveEditorView = useUiStore((s) => s.setActiveEditorView);
 
-  const { data: initialContent, isLoading } = useQuery({
+  const { data: initialContent, isLoading, isError } = useQuery({
     queryKey: ["fileContent", selectedFilePath],
     queryFn: () => readFile(selectedFilePath as string),
     enabled: !!selectedFilePath,
   });
+  // A file that can't be read — most likely the one remembered from the last
+  // launch, deleted or moved since — would otherwise sit at "Loading…"
+  // forever. Back to "Select a file" instead.
+  useEffect(() => {
+    if (isError) useWorkspaceStore.getState().selectFile(null);
+  }, [isError]);
 
   const [dirty, setDirty] = useState(false);
   const [conflict, setConflictState] = useState(false);
@@ -118,7 +130,72 @@ export function FileEditor() {
   // EditorView and so resets the scroll position to the top of the file.
   const [externalReload, setExternalReload] = useState<{ text: string; token: number } | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  // A new editor means another file was opened: start it at the top rather
+  // than wherever the previous file was scrolled to (the scroll area outlives
+  // the editor). Declared before useTypewriterOverscroll so that, in
+  // fullscreen, it then scrolls past its blank screenful onto the sheet's top.
+  useEffect(() => {
+    if (activeEditorView && scrollAreaRef.current) scrollAreaRef.current.scrollTop = 0;
+  }, [activeEditorView]);
   useTypewriterOverscroll(scrollAreaRef, fullscreenActive ? activeEditorView : null);
+
+  // The launch-time scroll position belongs to the first editor only.
+  useEffect(() => {
+    if (activeEditorView) startupScroll = null;
+  }, [activeEditorView]);
+  const initialScroll = startupScroll?.path === selectedFilePath ? startupScroll : null;
+
+  // Remember where this file is scrolled to, for the next launch: once
+  // scrolling pauses, once the text's layout stops changing (lines drawn
+  // for the first time get their real heights and the A4 page breaks move
+  // after the last scroll event), and once more as the window goes away.
+  useEffect(() => {
+    const view = activeEditorView;
+    const area = scrollAreaRef.current;
+    const path = selectedFilePath;
+    if (!view || !area || !path) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const save = () => {
+      if (!view.dom.isConnected) return;
+      const anchor = captureScrollAnchor(view, area, path);
+      if (anchor) saveScrollAnchor(anchor);
+    };
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(save, SCROLL_SAVE_DELAY_MS);
+    };
+    area.addEventListener("scroll", onScroll, { passive: true });
+    const resizeObserver = new ResizeObserver(onScroll);
+    resizeObserver.observe(view.contentDOM);
+    window.addEventListener("pagehide", save);
+    window.addEventListener("beforeunload", save);
+    return () => {
+      clearTimeout(timer);
+      area.removeEventListener("scroll", onScroll);
+      resizeObserver.disconnect();
+      window.removeEventListener("pagehide", save);
+      window.removeEventListener("beforeunload", save);
+    };
+  }, [activeEditorView, selectedFilePath]);
+
+  /** A press on the canvas or the sheet's margins, outside the editor itself,
+   *  puts the caret at the nearest point of the text instead of doing nothing
+   *  — in fullscreen most of the screen can be canvas. */
+  function handleCanvasMouseDown(event: React.MouseEvent<HTMLDivElement>) {
+    const view = activeEditorView;
+    const area = event.currentTarget;
+    if (!view || event.button !== 0 || view.dom.contains(event.target as Node)) return;
+    // The scroll area's own scrollbar, which isn't part of its client box.
+    const areaBox = area.getBoundingClientRect();
+    if (event.clientX >= areaBox.left + area.clientWidth || event.clientY >= areaBox.top + area.clientHeight) return;
+    const box = view.contentDOM.getBoundingClientRect();
+    const x = Math.min(Math.max(event.clientX, box.left + 1), box.right - 1);
+    const y = Math.min(Math.max(event.clientY, box.top + 1), box.bottom - 1);
+    const pos = view.posAtCoords({ x, y }, false);
+    event.preventDefault();
+    view.dispatch({ selection: { anchor: pos }, userEvent: "select.pointer" });
+    view.focus();
+  }
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingContent = useRef<string | null>(null);
   const dirtyRef = useRef(dirty);
@@ -352,7 +429,12 @@ export function FileEditor() {
               </button>
             </div>
           )}
-          <div className={styles.scrollArea} ref={scrollAreaRef}>
+          <div
+            className={styles.scrollArea}
+            ref={scrollAreaRef}
+            onMouseDown={handleCanvasMouseDown}
+            data-width={widthPreset}
+          >
             <div
               className={`${styles.widthContainer} prose`}
               data-width={widthPreset}
@@ -372,6 +454,8 @@ export function FileEditor() {
                 onResolveSuggestion={(id) => selectedFilePath && resolveSuggestion(selectedFilePath, id)}
                 onViewReady={setActiveEditorView}
                 scrollParentRef={scrollAreaRef}
+                paged={widthPreset === "a4"}
+                initialScroll={initialScroll}
               />
             </div>
           </div>

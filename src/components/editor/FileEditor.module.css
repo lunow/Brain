@@ -42,6 +42,13 @@
      editor.css's .cm-mkTableContainer) regardless of the Narrow/Width/Full
      measure applied to surrounding prose. */
   container-type: inline-size;
+  /* Narrow, Width and Full shrink to fit the pane and never scroll
+     sideways; only the A4 sheet keeps its width and scrolls (below). */
+  overflow-x: hidden;
+}
+
+.scrollArea[data-width="a4"] {
+  overflow-x: auto;
 }
 
 .widthContainer {
@@ -70,9 +77,14 @@
    columns are gone, so there's nothing left to sit apart from. Narrow and
    Width get their own, larger margin back via [data-centered] below; Full
    keeps none, since it has no width cap either. Both selectors weigh the
-   same, so [data-centered] must stay after this to win. */
+   same, so [data-centered] must stay after this to win.
+
+   --typewriter-overscroll (useTypewriterOverscroll) is a screenful of canvas
+   above and below the sheet, so the sheet can be slid anywhere on screen
+   like a piece of paper. It's margin, outside the sheet, so the paper keeps
+   its own size; the min-heights below leave it out for the same reason. */
 .widthContainer[data-fullscreen="true"] {
-  margin: 0 auto;
+  margin: var(--typewriter-overscroll, 0px) auto;
   min-height: 100%;
 }
 
@@ -89,7 +101,13 @@
 }
 
 .widthContainer[data-width="a4"] {
-  max-width: var(--measure-a4);
+  /* A sheet of paper doesn't get narrower with the window: below its width
+     the pane scrolls sideways instead (.scrollArea[data-width="a4"]).
+     margin: auto still centres it while there's room, and resolves to 0
+     on both sides once there isn't, so it then starts at the left edge
+     and the overflow is all reachable. */
+  width: var(--measure-a4);
+  max-width: none;
   padding: var(--a4-margin);
 }
 
@@ -102,13 +120,15 @@
    document still lands at 100% of .scrollArea (margin + box) instead of
    forcing extra scroll space. */
 .widthContainer[data-centered="true"] {
-  margin: var(--fullscreen-margin) auto;
+  margin: calc(var(--typewriter-overscroll, 0px) + var(--fullscreen-margin)) auto;
   min-height: calc(100% - 2 * var(--fullscreen-margin));
 }
 
 /* A short document still shows one whole sheet of paper, which is the point
    of the preset, so this replaces the fit-to-pane heights above. The extra
-   attribute (always present) is what lets it outrank them in every state. */
+   attribute (always present) is what lets it outrank them in every state.
+   Longer documents are cut into separate sheets by extensions/pagination.ts,
+   which also pads the last one out to a full page. */
 .widthContainer[data-width="a4"][data-fullscreen] {
   min-height: var(--a4-height);
 }

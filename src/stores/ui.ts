@@ -60,6 +60,29 @@ function savePanelWidths(widths: PanelWidths) {
   }
 }
 
+const WIDTH_PRESET_STORAGE_KEY = "write:widthPreset";
+const WIDTH_PRESETS: WidthPreset[] = ["narrow", "normal", "full", "a4"];
+
+/** Remembered so a restart reopens the last file laid out the same way —
+ *  its scroll position (editor/scrollMemory.ts) only means the same page
+ *  under the same measure. */
+function loadWidthPreset(): WidthPreset {
+  try {
+    const raw = localStorage.getItem(WIDTH_PRESET_STORAGE_KEY);
+    return WIDTH_PRESETS.includes(raw as WidthPreset) ? (raw as WidthPreset) : "normal";
+  } catch {
+    return "normal";
+  }
+}
+
+function saveWidthPreset(preset: WidthPreset) {
+  try {
+    localStorage.setItem(WIDTH_PRESET_STORAGE_KEY, preset);
+  } catch {
+    // Storage unavailable — the preset just won't persist.
+  }
+}
+
 const PANEL_VISIBILITY_STORAGE_KEY = "write:panelVisibility";
 
 interface PanelVisibility {
@@ -128,12 +151,6 @@ interface UiState {
   activeEditorView: EditorView | null;
   setActiveEditorView: (view: EditorView | null) => void;
 
-  /** Bumped whenever the live document changes, so the toolbar's page count
-   *  can follow activeEditorView's text without FileEditor re-rendering on
-   *  every keystroke to pass it down. */
-  documentRevision: number;
-  bumpDocumentRevision: () => void;
-
   /** Drag-to-resize widths for the tree, file list, and right sidebar
    *  columns. Persisted to localStorage so layout choices survive restarts. */
   treeWidth: number;
@@ -164,8 +181,11 @@ const initialPanelWidths = loadPanelWidths();
 const initialPanelVisibility = loadPanelVisibility();
 
 export const useUiStore = create<UiState>((set, get) => ({
-  widthPreset: "normal",
-  setWidthPreset: (preset) => set({ widthPreset: preset }),
+  widthPreset: loadWidthPreset(),
+  setWidthPreset: (preset) => {
+    saveWidthPreset(preset);
+    set({ widthPreset: preset });
+  },
 
   writingMode: "write",
   setWritingMode: (mode) => set({ writingMode: mode }),
@@ -189,8 +209,6 @@ export const useUiStore = create<UiState>((set, get) => ({
   activeEditorView: null,
   setActiveEditorView: (view) => set({ activeEditorView: view }),
 
-  documentRevision: 0,
-  bumpDocumentRevision: () => set((s) => ({ documentRevision: s.documentRevision + 1 })),
 
   treeWidth: initialPanelWidths.tree,
   setTreeWidth: (width) => {
