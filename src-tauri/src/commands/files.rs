@@ -56,24 +56,34 @@ pub struct MarkdownFileEntry {
 /// whether each file's content is read to build a preview snippet — callers
 /// that only need name/path (e.g. the Cmd+K palette, which recurses across
 /// every workspace root) should pass `false` to skip that I/O entirely.
+/// `include_csv` additionally lists `.csv` files (opened in the table view)
+/// for the callers that browse files — the tree and the palette — while the
+/// note graph, which only links notes, leaves it off.
 #[tauri::command]
 pub fn list_markdown_files(
     folder_path: String,
     recursive: bool,
     include_preview: bool,
+    include_csv: Option<bool>,
 ) -> Result<Vec<MarkdownFileEntry>, String> {
+    let filter = FileFilter {
+        recursive,
+        include_preview,
+        include_csv: include_csv.unwrap_or(false),
+    };
     let mut entries = Vec::new();
-    collect_markdown_files(Path::new(&folder_path), recursive, include_preview, &mut entries)?;
+    collect_markdown_files(Path::new(&folder_path), &filter, &mut entries)?;
     entries.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     Ok(entries)
 }
 
-fn collect_markdown_files(
-    dir: &Path,
+struct FileFilter {
     recursive: bool,
     include_preview: bool,
-    out: &mut Vec<MarkdownFileEntry>,
-) -> Result<(), String> {
+    include_csv: bool,
+}
+
+fn collect_markdown_files(dir: &Path, filter: &FileFilter, out: &mut Vec<MarkdownFileEntry>) -> Result<(), String> {
     let read_dir = fs::read_dir(dir).map_err(|e| e.to_string())?;
 
     for entry in read_dir {
@@ -85,13 +95,15 @@ fn collect_markdown_files(
 
         let file_type = entry.file_type().map_err(|e| e.to_string())?;
         if file_type.is_dir() {
-            if recursive && !is_ignored_dir(&name) {
-                collect_markdown_files(&entry.path(), recursive, include_preview, out)?;
+            if filter.recursive && !is_ignored_dir(&name) {
+                collect_markdown_files(&entry.path(), filter, out)?;
             }
             continue;
         }
 
-        if !name.to_lowercase().ends_with(".md") {
+        let lower = name.to_lowercase();
+        let is_csv = lower.ends_with(".csv");
+        if !(lower.ends_with(".md") || (filter.include_csv && is_csv)) {
             continue;
         }
 
@@ -103,7 +115,9 @@ fn collect_markdown_files(
             .map(|d| d.as_millis() as i64)
             .unwrap_or(0);
 
-        let preview = if include_preview {
+        // A CSV's "preview" would be its first row of raw cells — noise in a
+        // snippet, and the file can be large — so it never gets one.
+        let preview = if filter.include_preview && !is_csv {
             build_preview(&fs::read_to_string(entry.path()).unwrap_or_default())
         } else {
             String::new()
@@ -180,9 +194,26 @@ mod tests {
         stdfs::create_dir_all(dir.join("sub")).unwrap();
         File::create(dir.join("sub/nested.md")).unwrap();
 
-        let entries = list_markdown_files(dir.to_string_lossy().to_string(), false, true).unwrap();
+        let entries = list_markdown_files(dir.to_string_lossy().to_string(), false, true, None).unwrap();
         let names: Vec<String> = entries.iter().map(|e| e.name.clone()).collect();
         assert_eq!(names, vec!["note.md"]);
+
+        stdfs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn list_markdown_files_includes_csv_only_when_asked() {
+        let dir = temp_dir("csv");
+        File::create(dir.join("note.md")).unwrap();
+        File::create(dir.join("Data.CSV")).unwrap().write_all(b"a,b\n1,2\n").unwrap();
+        File::create(dir.join("other.txt")).unwrap();
+
+        let without = list_markdown_files(dir.to_string_lossy().to_string(), false, true, None).unwrap();
+        assert_eq!(without.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(), vec!["note.md"]);
+
+        let with = list_markdown_files(dir.to_string_lossy().to_string(), false, true, Some(true)).unwrap();
+        assert_eq!(with.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(), vec!["Data.CSV", "note.md"]);
+        assert_eq!(with[0].preview, "");
 
         stdfs::remove_dir_all(&dir).unwrap();
     }
@@ -192,7 +223,7 @@ mod tests {
         let dir = temp_dir("no-preview");
         File::create(dir.join("note.md")).unwrap().write_all(b"# Heading\nBody text").unwrap();
 
-        let entries = list_markdown_files(dir.to_string_lossy().to_string(), false, false).unwrap();
+        let entries = list_markdown_files(dir.to_string_lossy().to_string(), false, false, None).unwrap();
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].preview, "");
 
@@ -210,7 +241,7 @@ mod tests {
         stdfs::create_dir_all(dir.join("notes")).unwrap();
         File::create(dir.join("notes/real.md")).unwrap();
 
-        let entries = list_markdown_files(dir.to_string_lossy().to_string(), true, false).unwrap();
+        let entries = list_markdown_files(dir.to_string_lossy().to_string(), true, false, None).unwrap();
         let mut names: Vec<String> = entries.iter().map(|e| e.name.clone()).collect();
         names.sort();
         assert_eq!(names, vec!["note.md", "real.md"]);
@@ -225,7 +256,7 @@ mod tests {
         stdfs::create_dir_all(dir.join("sub")).unwrap();
         File::create(dir.join("sub/nested.md")).unwrap();
 
-        let entries = list_markdown_files(dir.to_string_lossy().to_string(), true, true).unwrap();
+        let entries = list_markdown_files(dir.to_string_lossy().to_string(), true, true, None).unwrap();
         let mut names: Vec<String> = entries.iter().map(|e| e.name.clone()).collect();
         names.sort();
         assert_eq!(names, vec!["nested.md", "top.md"]);

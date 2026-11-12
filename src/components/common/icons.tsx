@@ -90,6 +90,35 @@ export function FileIcon({ className }: { className?: string }) {
   );
 }
 
+/** {@link FileIcon}'s sheet for CSV rows, the fold corner traded for a
+ *  small grid so a table reads apart from a note at a glance. */
+export function TableFileIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <rect
+        x="2.5"
+        y="2.5"
+        width="11"
+        height="11"
+        rx="1"
+        fill="currentColor"
+        fillOpacity="0.15"
+        stroke="currentColor"
+        strokeWidth="1.1"
+      />
+      <path d="M2.5 6H13.5M2.5 9.75H13.5M6.5 6V13.5" stroke="currentColor" strokeWidth="1.1" />
+    </svg>
+  );
+}
+
 /** Disclosure chevron for Content-tree folder rows. Points right when
  *  collapsed and is rotated 90deg by CSS when open, rather than swapping to a
  *  second down-pointing glyph, so the transition can animate. */

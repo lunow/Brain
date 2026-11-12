@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import {
   listDirChildren,
+  isCsvPath,
   listMarkdownFiles,
   revealInFinder,
   type DirEntryLite,
@@ -21,7 +22,7 @@ import { useWorkspaceStore } from "@/stores/workspace";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { ContextMenu, type ContextMenuEntry } from "@/components/common/ContextMenu";
 import { InlineRenameInput } from "@/components/common/InlineRenameInput";
-import { ChevronRightIcon, FileIcon, FolderIcon, FolderOpenIcon } from "@/components/common/icons";
+import { ChevronRightIcon, FileIcon, FolderIcon, FolderOpenIcon, TableFileIcon } from "@/components/common/icons";
 import styles from "./FileTree.module.css";
 
 /**
@@ -119,6 +120,7 @@ function handleVerticalNav(e: React.KeyboardEvent<HTMLElement>): boolean {
  */
 interface TreeOps {
   createFile: (parentDir: string) => void;
+  createCsv: (parentDir: string) => void;
   createFolder: (parentDir: string) => void;
   rename: (path: string, newName: string) => void;
   remove: (path: string) => void;
@@ -134,12 +136,13 @@ function useTreeOps(): TreeOps {
 }
 
 function TreeOpsProvider({ children }: { children: ReactNode }) {
-  const { createFileMutation, createFolderMutation, renameMutation, deleteMutation, duplicateMutation } =
+  const { createFileMutation, createCsvMutation, createFolderMutation, renameMutation, deleteMutation, duplicateMutation } =
     useFileOperations();
 
   const value = useMemo<TreeOps>(
     () => ({
       createFile: (parentDir) => createFileMutation.mutate(parentDir),
+      createCsv: (parentDir) => createCsvMutation.mutate(parentDir),
       createFolder: (parentDir) => createFolderMutation.mutate(parentDir),
       rename: (path, newName) => renameMutation.mutate({ path, newName }),
       remove: (path) => deleteMutation.mutate(path),
@@ -147,6 +150,7 @@ function TreeOpsProvider({ children }: { children: ReactNode }) {
     }),
     [
       createFileMutation.mutate,
+      createCsvMutation.mutate,
       createFolderMutation.mutate,
       renameMutation.mutate,
       deleteMutation.mutate,
@@ -236,7 +240,7 @@ function TreeFileRow({ file, depth }: { file: MarkdownFileEntry; depth: number }
         }}
       >
         <span className={styles.disclosureSpacer} />
-        <FileIcon className={styles.icon} />
+        {isCsvPath(file.path) ? <TableFileIcon className={styles.icon} /> : <FileIcon className={styles.icon} />}
         {isRenaming ? (
           <InlineRenameInput
             initialName={file.name}
@@ -275,7 +279,7 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
     // more, and building it costs a full fs::read_to_string of every file in
     // the folder — repaid on every autosave and every fs-watcher event,
     // which invalidate ["markdownFiles"] wholesale.
-    queryFn: () => listMarkdownFiles(path, false, false),
+    queryFn: () => listMarkdownFiles(path, false, false, true),
     enabled: isExpanded,
   });
 
@@ -306,6 +310,13 @@ function TreeFolderRow({ path, name, depth }: { path: string; name: string; dept
       onSelect: () => {
         expandPath(path);
         ops.createFile(path);
+      },
+    },
+    {
+      label: "New CSV",
+      onSelect: () => {
+        expandPath(path);
+        ops.createCsv(path);
       },
     },
     {
@@ -460,7 +471,7 @@ function FileTreeBody({ rootPath }: { rootPath: string }) {
   });
   const { data: files } = useQuery({
     queryKey: ["markdownFiles", rootPath, false],
-    queryFn: () => listMarkdownFiles(rootPath, false, false),
+    queryFn: () => listMarkdownFiles(rootPath, false, false, true),
   });
 
   // Dropping onto the tree's own background moves an entry back up to the
@@ -476,6 +487,7 @@ function FileTreeBody({ rootPath }: { rootPath: string }) {
 
   const menuItems: ContextMenuEntry[] = [
     { label: "New File", onSelect: () => rootOps.createFile(rootPath) },
+    { label: "New CSV", onSelect: () => rootOps.createCsv(rootPath) },
     { label: "New Folder", onSelect: () => rootOps.createFolder(rootPath) },
     "separator",
     { label: "Reveal in Finder", onSelect: () => revealInFinder(rootPath) },

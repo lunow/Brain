@@ -1,0 +1,329 @@
+/*
+ * The CSV table. Same monochrome palette as the rest of the app: structure
+ * comes from hairlines and one step of gray, not color. The active row is a
+ * full-width band; the active cell is a ring inside it. Both dim when the
+ * table doesn't have focus, so it's always clear where keystrokes go.
+ */
+
+.root {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+
+  --csv-grid-line: var(--tree-guide);
+  --csv-row-active: var(--bg-hover-filelist);
+  --csv-ring: var(--gray-400);
+}
+
+.root[data-focused="true"] {
+  --csv-row-active: var(--bg-hover);
+  --csv-ring: var(--text-primary);
+}
+
+/* Keyboard + clipboard target. Off-screen rather than display:none, so it
+   can hold focus and a selection. */
+.sink {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  resize: none;
+  overflow: hidden;
+}
+
+.scroller {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sizer {
+  position: relative;
+}
+
+/* --- Header ----------------------------------------------------------- */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-hairline);
+  box-sizing: border-box;
+}
+
+.corner {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  height: 100%;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--csv-grid-line);
+}
+
+/* Content sits at the top of every cell, header included, so a tall wrapped
+   row still reads along one line across. */
+.headerCell {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 4px 0 10px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--csv-grid-line);
+  font-size: var(--type-ui-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.headerCell[data-numeric="true"] {
+  flex-direction: row-reverse;
+  padding: 8px 10px 0 4px;
+}
+
+.headerCell[data-active-col="true"] {
+  color: var(--text-primary);
+}
+
+.headerCell[data-active="true"] {
+  background: var(--csv-row-active);
+  box-shadow: inset 0 0 0 1.5px var(--csv-ring);
+}
+
+.headerLabel {
+  flex: 1;
+  min-width: 0;
+  line-height: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerCell[data-numeric="true"] .headerLabel {
+  text-align: right;
+}
+
+.headerLabel[data-placeholder="true"] {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.sortButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.headerCell:hover .sortButton,
+.headerCell[data-sorted="true"] .sortButton {
+  opacity: 1;
+}
+
+.sortButton:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.sortButton path {
+  fill: currentColor;
+  opacity: 0.45;
+}
+
+.sortButton[data-sort="asc"] .sortUp,
+.sortButton[data-sort="desc"] .sortDown {
+  opacity: 1;
+  fill: var(--text-primary);
+}
+
+.sortButton[data-sort="asc"] .sortDown,
+.sortButton[data-sort="desc"] .sortUp {
+  opacity: 0;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  z-index: 1;
+  cursor: col-resize;
+}
+
+.resizeHandle:hover,
+.resizeHandle:active {
+  background: linear-gradient(to right, transparent 3px, var(--gray-400) 3px, var(--gray-400) 5px, transparent 5px);
+}
+
+/* --- Body ------------------------------------------------------------- */
+
+.row {
+  position: absolute;
+  left: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--csv-grid-line);
+}
+
+.row[data-active="true"] {
+  background: var(--csv-row-active);
+}
+
+.gutter {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  height: 100%;
+  box-sizing: border-box;
+  padding-right: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  /* Baseline-ish with the cell text's first line (13px on 18px). */
+  padding-top: 7px;
+  line-height: 18px;
+  font-size: var(--type-ui-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  background: var(--bg-panel);
+  border-right: 1px solid var(--csv-grid-line);
+}
+
+/* The gutter has its own opaque background (cells scroll under it), so it
+   needs the active band painted on top of that. */
+.row[data-active="true"] .gutter {
+  background: linear-gradient(var(--csv-row-active), var(--csv-row-active)), var(--bg-panel);
+  color: var(--text-secondary);
+}
+
+/* Padding and line height are mirrored in rowLayout.ts (CELL_PAD_TOP,
+   CELL_PAD_BOTTOM, LINE_HEIGHT), which estimates wrapped row heights. */
+.cell {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px 0;
+  overflow: hidden;
+  border-right: 1px solid var(--csv-grid-line);
+}
+
+.cellText {
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row[data-wrap="true"] .cellText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+
+.cell[data-numeric="true"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell[data-active="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--csv-ring);
+  border-radius: 2px;
+}
+
+/* --- Editor ----------------------------------------------------------- */
+
+.editor {
+  position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 6px 10px 5px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 0;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 1.5px var(--text-primary),
+    0 4px 14px rgb(0 0 0 / 0.12);
+  outline: none;
+  resize: none;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.emptyHint {
+  position: absolute;
+  padding: var(--space-3) 10px;
+  font-size: var(--type-ui-caption);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+/* --- Toolbar stats ---------------------------------------------------- */
+
+.stats {
+  font-family: var(--font-sans);
+  font-size: var(--type-ui-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.statsSep {
+  margin: 0 6px;
+  opacity: 0.7;
+}
+
+/* --- Toolbar wrap toggle ---------------------------------------------- */
+
+.toolButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+}
+
+.toolButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.toolButton[data-active="true"] {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listen } from "@tauri-apps/api/event";
-import { readFile, writeFile } from "@/lib/tauri-commands";
+import { isCsvPath, readFile, writeFile } from "@/lib/tauri-commands";
+import { readSettledFile } from "@/lib/readSettledFile";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useUiStore, hasRightSidebar, RIGHT_SIDEBAR_WIDTH_MIN, RIGHT_SIDEBAR_WIDTH_MAX } from "@/stores/ui";
 import { useReviewStore, EMPTY_SUGGESTIONS } from "@/stores/review";
@@ -17,6 +18,7 @@ import { PanelVisibilityToggles } from "@/components/layout/PanelVisibilityToggl
 import { useTypewriterOverscroll } from "./useTypewriterOverscroll";
 import { captureScrollAnchor, loadScrollAnchor, saveScrollAnchor } from "./scrollMemory";
 import { MarkdownEditor } from "./MarkdownEditor";
+import { CsvFileEditor } from "@/components/csv/CsvFileEditor";
 import { WidthToolbar } from "./WidthToolbar";
 import type { ExportKind } from "./ExportMenu";
 import styles from "./FileEditor.module.css";
@@ -28,36 +30,19 @@ const SCROLL_SAVE_DELAY_MS = 250;
 /** Where the file the app last closed on was scrolled to. Used once, for the
  *  first editor that opens after launch; every later file opens at the top. */
 let startupScroll = loadScrollAnchor();
-const SETTLE_DELAY_MS = 150;
-const SETTLE_MAX_READS = 6;
-
-/**
- * Reads a file another program is writing, once it has stopped changing.
- * Most writers truncate the file and then fill it, and a watcher event can
- * land in between: adopting that read showed an empty or cut-off document,
- * which collapsed the scroll range and left the editor at the top of the
- * file once the full text arrived. Two identical reads a moment apart mean
- * the write is done. Returns null if the file can't be read (an atomic save
- * mid-rename, a deletion) — there's nothing to adopt then.
- */
-async function readSettledFile(path: string): Promise<string | null> {
-  let previous: string | null = null;
-  for (let i = 0; i < SETTLE_MAX_READS; i++) {
-    if (i > 0) await new Promise((resolve) => setTimeout(resolve, SETTLE_DELAY_MS));
-    let current: string;
-    try {
-      current = await readFile(path);
-    } catch {
-      previous = null;
-      continue;
-    }
-    if (current === previous) return current;
-    previous = current;
+/** Routes the open file to its editor: CSVs to the table view, everything
+ *  else to the markdown editor. Explore mode stays with the markdown side,
+ *  which owns the graph pane and works without any file open. */
+export function FileEditor() {
+  const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
+  const writingMode = useUiStore((s) => s.writingMode);
+  if (selectedFilePath && isCsvPath(selectedFilePath) && writingMode !== "explore") {
+    return <CsvFileEditor key={selectedFilePath} path={selectedFilePath} />;
   }
-  return previous;
+  return <MarkdownFileEditor />;
 }
 
-export function FileEditor() {
+function MarkdownFileEditor() {
   const selectedFilePath = useWorkspaceStore((s) => s.selectedFilePath);
   const widthPreset = useUiStore((s) => s.widthPreset);
   const writingMode = useUiStore((s) => s.writingMode);

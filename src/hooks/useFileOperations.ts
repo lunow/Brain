@@ -37,6 +37,14 @@ export function useFileOperations() {
     },
   });
 
+  const createCsvMutation = useMutation({
+    mutationFn: (parentDir: string) => createFile(parentDir, "Untitled.csv"),
+    onSuccess: (entry, parentDir) => {
+      invalidateDir(parentDir);
+      selectFile(entry.path);
+    },
+  });
+
   const createFolderMutation = useMutation({
     mutationFn: (parentDir: string) => createFolder(parentDir, "New Folder"),
     onSuccess: (_entry, parentDir) => invalidateDir(parentDir),
@@ -82,6 +90,7 @@ export function useFileOperations() {
 
   return {
     createFileMutation,
+    createCsvMutation,
     createFolderMutation,
     renameMutation,
     deleteMutation,

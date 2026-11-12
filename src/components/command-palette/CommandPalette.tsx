@@ -82,7 +82,7 @@ export function CommandPalette() {
             listAllFolders(root.path),
             // No preview needed here — this index only surfaces name/path,
             // so skip reading every file's content across every root.
-            listMarkdownFiles(root.path, true, false),
+            listMarkdownFiles(root.path, true, false, true),
           ]);
           const folders: FolderResult[] = [
             { type: "folder", name: root.displayName, path: root.path, rootPath: root.path },

@@ -171,19 +171,21 @@ async function collectStats(dir: string, stats: FolderStats): Promise<void> {
   }
 }
 
-async function collectMarkdownFiles(dir: string, recursive: boolean, out: unknown[]): Promise<void> {
+async function collectMarkdownFiles(dir: string, recursive: boolean, includeCsv: boolean, out: unknown[]): Promise<void> {
   const dirents = await fs.readdir(dir, { withFileTypes: true });
   for (const d of dirents) {
     if (d.name.startsWith(".")) continue;
     const fullPath = path.join(dir, d.name);
     if (d.isDirectory()) {
-      if (recursive) await collectMarkdownFiles(fullPath, recursive, out);
+      if (recursive) await collectMarkdownFiles(fullPath, recursive, includeCsv, out);
       continue;
     }
-    if (!d.name.toLowerCase().endsWith(".md")) continue;
+    const lower = d.name.toLowerCase();
+    const isCsv = lower.endsWith(".csv");
+    if (!(lower.endsWith(".md") || (includeCsv && isCsv))) continue;
 
     const stat = await fs.stat(fullPath);
-    const content = await fs.readFile(fullPath, "utf-8").catch(() => "");
+    const content = isCsv ? "" : await fs.readFile(fullPath, "utf-8").catch(() => "");
     out.push({
       name: d.name,
       path: fullPath,
@@ -236,7 +238,7 @@ async function handleCommand(cmd: string, args: Record<string, unknown>): Promis
     }
     case "list_markdown_files": {
       const out: unknown[] = [];
-      await collectMarkdownFiles(args.folderPath as string, Boolean(args.recursive), out);
+      await collectMarkdownFiles(args.folderPath as string, Boolean(args.recursive), Boolean(args.includeCsv), out);
       out.sort((a: any, b: any) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
       return out;
     }
@@ -267,10 +269,11 @@ async function handleCommand(cmd: string, args: Record<string, unknown>): Promis
     case "create_file": {
       const dir = args.parentDir as string;
       const raw = args.name as string;
-      const stem = raw.endsWith(".md") ? raw.slice(0, -3) : raw;
-      const finalName = dedupeName(dir, stem, "md");
+      const isCsv = raw.endsWith(".csv");
+      const stem = isCsv ? raw.slice(0, -4) : raw.endsWith(".md") ? raw.slice(0, -3) : raw;
+      const finalName = dedupeName(dir, stem, isCsv ? "csv" : "md");
       const filePath = path.join(dir, finalName);
-      await fs.writeFile(filePath, "", "utf-8");
+      await fs.writeFile(filePath, isCsv ? "Column 1,Column 2,Column 3\n,,\n" : "", "utf-8");
       return { name: finalName, path: filePath };
     }
     case "create_folder": {

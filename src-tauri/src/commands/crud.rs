@@ -39,14 +39,22 @@ pub fn reveal_in_finder(path: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Header row a new CSV starts with, so the table view opens on something to
+/// type into rather than a blank file with no columns to navigate.
+const NEW_CSV_CONTENT: &str = "Column 1,Column 2,Column 3\n,,\n";
+
+/// Creates a markdown note — or a CSV table when `name` ends in `.csv`.
 #[tauri::command]
 pub fn create_file(parent_dir: String, name: String) -> Result<EntryMeta, String> {
     let dir = Path::new(&parent_dir);
-    let stem = name.strip_suffix(".md").unwrap_or(&name);
-    let final_name = dedupe_name(dir, stem, Some("md"));
+    let (stem, ext, content) = match name.strip_suffix(".csv") {
+        Some(stem) => (stem, "csv", NEW_CSV_CONTENT),
+        None => (name.strip_suffix(".md").unwrap_or(&name), "md", ""),
+    };
+    let final_name = dedupe_name(dir, stem, Some(ext));
     let path = dir.join(&final_name);
 
-    fs::write(&path, "").map_err(|e| e.to_string())?;
+    fs::write(&path, content).map_err(|e| e.to_string())?;
     Ok(EntryMeta {
         name: final_name,
         path: path.to_string_lossy().to_string(),
@@ -169,6 +177,17 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    #[test]
+    fn create_file_csv_gets_csv_extension_and_starter_header() {
+        let dir = temp_dir("create-file-csv");
+        let first = create_file(dir.to_string_lossy().to_string(), "Untitled.csv".into()).unwrap();
+        let second = create_file(dir.to_string_lossy().to_string(), "Untitled.csv".into()).unwrap();
+        assert_eq!(first.name, "Untitled.csv");
+        assert_eq!(second.name, "Untitled 2.csv");
+        assert_eq!(fs::read_to_string(&first.path).unwrap(), NEW_CSV_CONTENT);
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

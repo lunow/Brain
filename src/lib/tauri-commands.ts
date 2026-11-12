@@ -70,8 +70,18 @@ export async function pickSaveLocation(defaultPath: string, extension: string, t
  *  shows a content snippet per file; pass false to skip reading every
  *  file's content (e.g. the Cmd+K palette, which only needs name/path but
  *  recurses across every workspace root). */
-export function listMarkdownFiles(folderPath: string, recursive: boolean, includePreview = true): Promise<MarkdownFileEntry[]> {
-  return invoke("list_markdown_files", { folderPath, recursive, includePreview });
+export function listMarkdownFiles(
+  folderPath: string,
+  recursive: boolean,
+  includePreview = true,
+  includeCsv = false,
+): Promise<MarkdownFileEntry[]> {
+  return invoke("list_markdown_files", { folderPath, recursive, includePreview, includeCsv });
+}
+
+/** Whether a path opens in the CSV table view rather than the markdown editor. */
+export function isCsvPath(path: string): boolean {
+  return path.toLowerCase().endsWith(".csv");
 }
 
 export function getWorkspaceRoots(): Promise<RootFolder[]> {
