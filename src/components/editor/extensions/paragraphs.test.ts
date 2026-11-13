@@ -83,3 +83,19 @@ describe("skipSeparator", () => {
     expect(skipSeparator(stateOf(doc), 1, 0)).toBeNull();
   });
 });
+
+describe("hard breaks", () => {
+  it("Backspace on the empty line after Shift-Enter removes the backslash too", () => {
+    expect(press("Backspace", "Hello\\\n|")).toEqual({ doc: "Hello", caret: 5 });
+  });
+  it("Backspace at the start of a broken line joins without leaving a backslash", () => {
+    expect(press("Backspace", "Hello\\\n|world")).toEqual({ doc: "Helloworld", caret: 5 });
+  });
+  it("Delete at the end of a line before a break removes the whole break", () => {
+    expect(press("Delete", "Hello\\|\nworld")).toEqual({ doc: "Helloworld", caret: 5 });
+    expect(press("Delete", "Hello|\\\nworld")).toEqual({ doc: "Helloworld", caret: 5 });
+  });
+  it("leaves an escaped backslash to the default Backspace", () => {
+    expect(press("Backspace", "Hello\\\\\n|world")).toBeNull();
+  });
+});

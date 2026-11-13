@@ -159,6 +159,14 @@ function collectBlankLineDecorations(state: EditorState): PendingDecoration[] {
   };
 
   for (const run of cachedBlankLineRuns(state)) {
+    // The caret's empty line is a paragraph that just hasn't been typed yet,
+    // so the gap above it is already the gap above a paragraph. Sizing it by
+    // what follows the whole run instead (nothing, at the end of a document)
+    // would make it loose until the first keystroke and then snap tight,
+    // shifting everything above by the difference.
+    let caretLine: number | null = null;
+    for (let j = run.from; j <= run.to && caretLine === null; j++) if (hasCaret(j)) caretLine = j;
+
     for (let j = run.from; j <= run.to; j++) {
       if (hasCaret(j)) continue;
       const line = state.doc.line(j);
@@ -166,8 +174,9 @@ function collectBlankLineDecorations(state: EditorState): PendingDecoration[] {
       // The gap goes on the first blank line after text, or the first after
       // the caret's own empty paragraph; the rest of the run adds nothing.
       const startsGap = j === run.from || hasCaret(j - 1);
+      const leadsIntoParagraph = caretLine !== null && j < caretLine ? true : run.leadsIntoParagraph;
 
-      const gap = startsGap ? (run.leadsIntoParagraph ? " cm-mkGapTight" : " cm-mkGapLoose") : "";
+      const gap = startsGap ? (leadsIntoParagraph ? " cm-mkGapTight" : " cm-mkGapLoose") : "";
       out.push({
         from: line.from,
         to: line.from,
@@ -201,6 +210,34 @@ function cachedBlankLineRuns(state: EditorState): BlankLineRun[] {
   const runs = collectBlankLineRuns(state);
   blankLineCache = { doc: state.doc, tree, runs };
   return runs;
+}
+
+/**
+ * Shift-Enter's backslash while the new line is still empty. Markdown only
+ * calls "\\\n" a hard break when text follows on the next line, so until the
+ * first keystroke the parser sees a stray backslash at the paragraph's end,
+ * and the HardBreak rule in buildDecorations never hides it: it would show up
+ * on Shift-Enter, vanish on the first character and come back on deleting it.
+ * The caret sitting on that empty line is the break in progress, so hide it
+ * there too. Once the caret leaves an empty line it really is a stray
+ * backslash in the file, and stays visible.
+ */
+function collectPendingHardBreaks(state: EditorState): PendingDecoration[] {
+  const out: PendingDecoration[] = [];
+  const seen = new Set<number>();
+  for (const range of state.selection.ranges) {
+    if (!range.empty) continue;
+    const line = state.doc.lineAt(range.head);
+    if (line.number === 1 || line.text.trim().length > 0) continue;
+    const prev = state.doc.line(line.number - 1);
+    // An odd run of trailing backslashes: the last one isn't itself escaped.
+    const trailing = prev.text.length - prev.text.replace(/\\+$/, "").length;
+    if (trailing % 2 === 0 || seen.has(prev.to)) continue;
+    if (topLevelBlockAt(state, prev.to - 1) !== "Paragraph") continue;
+    seen.add(prev.to);
+    out.push({ from: prev.to - 1, to: prev.to, deco: Decoration.replace({}) });
+  }
+  return out;
 }
 
 function buildDecorations(state: EditorState): DecorationSet {
@@ -406,6 +443,8 @@ function buildDecorations(state: EditorState): DecorationSet {
       }
     },
   });
+
+  pending.push(...collectPendingHardBreaks(state));
 
   // Defensive: also exclude every range the main pass already replaced
   // (hidden markdown marks, widgets), so a smart-typography match can

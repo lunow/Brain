@@ -56,7 +56,10 @@
   user-select: none;
 }
 
-.row:hover {
+/* data-state="open" is set by Radix on the row whose context menu is open,
+   so it keeps its hover fill while the pointer is over the menu. */
+.row:hover,
+.row[data-state="open"] {
   background: var(--bg-hover-filelist);
 }
 

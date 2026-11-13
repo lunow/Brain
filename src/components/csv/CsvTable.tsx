@@ -931,7 +931,7 @@ interface CellEditorProps {
   onCancel: () => void;
 }
 
-/** The in-place editor. Enter commits and moves down, Tab moves right,
+/** The in-place editor. Enter commits and stays on the cell, Tab moves right,
  *  ⇧↵ or ⌥↵ inserts a line break (CSV cells may hold several lines), Escape
  *  cancels, and clicking elsewhere commits. */
 function CellEditor({ state, left, top, width, height, onChange, onCommit, onCancel }: CellEditorProps) {
@@ -976,7 +976,7 @@ function CellEditor({ state, left, top, width, height, onChange, onCommit, onCan
         if (e.key === "Enter" || e.key === "Tab" || e.key === "Escape") e.stopPropagation();
         if (e.key === "Enter" && !e.shiftKey && !e.altKey) {
           e.preventDefault();
-          finish({ dRow: 1, dCol: 0 });
+          finish({ dRow: 0, dCol: 0 });
         } else if (e.key === "Enter" && e.altKey) {
           // Shift+Enter inserts a newline natively; Alt+Enter on macOS doesn't.
           e.preventDefault();

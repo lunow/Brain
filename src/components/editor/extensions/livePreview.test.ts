@@ -28,7 +28,22 @@ function blankLines(state: EditorState): string[] {
 describe("blank-line decorations", () => {
   it("collapses the blank lines between blocks, sparing the caret's own", () => {
     // "Hello\n\n" with the caret on the empty line just opened with Enter.
-    expect(blankLines(stateOf("Hello\n\n", 7))).toEqual(["2:cm-mkBlank cm-mkGapLoose"]);
+    // The gap above it is already the tight one it will have once typed in.
+    expect(blankLines(stateOf("Hello\n\n", 7))).toEqual(["2:cm-mkBlank cm-mkGapTight"]);
+  });
+
+  it("keeps the gap above a new paragraph the same when its first character is typed", () => {
+    const empty = stateOf("Hello\n\n", 7);
+    const typed = empty.update({ changes: { from: 7, insert: "x" }, selection: EditorSelection.cursor(8) }).state;
+    ensureSyntaxTree(typed, typed.doc.length, 5000);
+    expect(blankLines(empty)).toEqual(blankLines(typed));
+  });
+
+  it("closes off with a loose gap after the caret's paragraph when a heading follows", () => {
+    expect(blankLines(stateOf("Hello\n\n\n\n# Next", 7))).toEqual([
+      "2:cm-mkBlank cm-mkGapTight",
+      "4:cm-mkBlank cm-mkGapLoose",
+    ]);
   });
 
   it("recollapses a line the caret has left, on a selection-only update", () => {
@@ -83,5 +98,21 @@ describe("links", () => {
     const state = stateOf("a [site](https://example.com) b", 0);
     expect(visibleText(state)).toBe("a site b");
     expect(linkHrefs(state)).toEqual(["https://example.com"]);
+  });
+});
+
+describe("hard breaks", () => {
+  it("hides Shift-Enter's backslash before and after the new line gets text", () => {
+    // "Hello\\\n" with the caret on the empty line Shift-Enter just opened.
+    expect(visibleText(stateOf("Hello\\\n", 7))).toBe("Hello\n");
+    expect(visibleText(stateOf("Hello\\\nx", 8))).toBe("Hello\nx");
+  });
+
+  it("leaves an escaped backslash alone", () => {
+    expect(visibleText(stateOf("Hello\\\\\n", 8))).toBe("Hello\\\\\n");
+  });
+
+  it("shows a stray trailing backslash once the caret leaves the empty line", () => {
+    expect(visibleText(stateOf("Hello\\\n", 0))).toBe("Hello\\\n");
   });
 });

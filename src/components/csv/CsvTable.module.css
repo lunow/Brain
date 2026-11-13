@@ -7,6 +7,9 @@
 
 .root {
   position: relative;
+  /* The sticky header, editor and row sheet layer with z-index; keep those
+     layers inside the table so they can't cover menus and popovers. */
+  isolation: isolate;
   flex: 1;
   min-height: 0;
   display: flex;

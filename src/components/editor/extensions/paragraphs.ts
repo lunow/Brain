@@ -158,11 +158,58 @@ const joinWithNext: Command = (view) => {
   return true;
 };
 
+/** The line ends in a hard break's backslash: an odd run of trailing
+ *  backslashes (an even one is escaped backslashes) in a paragraph. */
+function endsInHardBreak(state: EditorState, lineNumber: number): boolean {
+  const line = state.doc.line(lineNumber);
+  const trailing = line.text.length - line.text.replace(/\\+$/, "").length;
+  return trailing % 2 === 1 && topLevelBlockAt(state, line.to - 1) === "Paragraph";
+}
+
+/** Backspace at the start of a line opened with Shift-Enter removes the
+ *  whole break, backslash included. Deleting only the newline would leave
+ *  the backslash (hidden while it was a break, see livePreview.ts) behind as
+ *  a visible stray character at the end of the line above. */
+const removeHardBreakBackward: Command = (view) => {
+  const { state } = view;
+  const sel = state.selection.main;
+  if (state.readOnly || state.selection.ranges.length !== 1 || !sel.empty) return false;
+  const line = state.doc.lineAt(sel.head);
+  if (sel.head !== line.from || line.number < 2 || !endsInHardBreak(state, line.number - 1)) return false;
+  const prev = state.doc.line(line.number - 1);
+  view.dispatch({
+    changes: { from: prev.to - 1, to: line.from },
+    selection: EditorSelection.cursor(prev.to - 1),
+    scrollIntoView: true,
+    userEvent: "delete.backward",
+  });
+  return true;
+};
+
+/** Delete at the end of a line ending in a hard break: the mirror of
+ *  removeHardBreakBackward. The caret can sit on either side of the hidden
+ *  backslash, so both count as the line's end. */
+const removeHardBreakForward: Command = (view) => {
+  const { state } = view;
+  const sel = state.selection.main;
+  if (state.readOnly || state.selection.ranges.length !== 1 || !sel.empty) return false;
+  const line = state.doc.lineAt(sel.head);
+  if (line.number >= state.doc.lines || !endsInHardBreak(state, line.number)) return false;
+  if (sel.head !== line.to && sel.head !== line.to - 1) return false;
+  view.dispatch({
+    changes: { from: line.to - 1, to: line.to + 1 },
+    selection: EditorSelection.cursor(line.to - 1),
+    scrollIntoView: true,
+    userEvent: "delete.forward",
+  });
+  return true;
+};
+
 export const paragraphKeyBindings: KeyBinding[] = [
   { key: "Enter", run: newParagraph },
   { key: "Shift-Enter", run: softLineBreak },
-  { key: "Backspace", run: joinWithPrevious },
-  { key: "Delete", run: joinWithNext },
+  { key: "Backspace", run: (view) => removeHardBreakBackward(view) || joinWithPrevious(view) },
+  { key: "Delete", run: (view) => removeHardBreakForward(view) || joinWithNext(view) },
 ];
 
 /**

@@ -105,13 +105,22 @@ export function typewriterScroll(getScrollParent: () => HTMLElement | null) {
           }
 
           const delta = cursorY - this.anchorY;
+          // Only a move to another visual row is worth a scroll, and a row is
+          // at least a line tall. Anything smaller is the caret being measured
+          // differently, not moving: an empty line's caret comes from its
+          // line box, a typed one's from the glyph, and the two sit a couple
+          // of pixels apart. Scrolling for that would nudge every line above
+          // on the first keystroke of a new paragraph, so take the new
+          // position as the anchor instead.
+          if (Math.abs(delta) < this.view.defaultLineHeight / 2) {
+            this.anchorY = cursorY;
+            return;
+          }
           // Browsers clamp scrollTop to [0, scrollHeight - clientHeight] on
           // their own, so near the top or bottom of the document the line
           // simply stays put rather than needing special-casing here.
-          if (Math.abs(delta) > 1) {
-            parent.scrollTop += delta;
-            this.expectedScrollTop = parent.scrollTop;
-          }
+          parent.scrollTop += delta;
+          this.expectedScrollTop = parent.scrollTop;
         },
       };
 
