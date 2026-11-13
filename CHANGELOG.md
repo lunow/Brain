@@ -5,6 +5,41 @@ versioning scheme. The version fields in `package.json`, `Cargo.toml`, and
 `tauri.conf.json` store it as `N.0.0` for tooling compatibility, but every
 release is referred to as "Version N".
 
+## Version 11
+
+**CSV tables**
+
+- `.csv` files show up in the file tree and the `⌘K` palette and open as
+  a table. "New CSV" in the file tree's menu starts one with three
+  columns to type into.
+- Typing replaces the cell, as in a spreadsheet. Enter commits, Tab moves
+  right, `⇧↵` or `⌥↵` adds a line break inside the cell, and Escape
+  cancels. Cut, copy, paste and undo work as usual.
+- `⌥` + arrow inserts a row or column next to the cursor. The right-click
+  menu inserts, deletes and renames rows and columns.
+- Sort by any column from its header. Sorting only changes the view, the
+  file keeps its order.
+- Drag column edges to resize them. Columns of numbers are right-aligned.
+  Word wrap (`⌥Z`) shows long cells in full.
+- `⌘↵` opens the current row as a sheet, one field per column.
+- Edits save on their own, as in notes, and are also saved when you close
+  the file or open another one. If another program changes the file, it
+  reloads, or asks first when you have unsaved edits.
+
+**Typing without jumps**
+
+- Starting a new paragraph at the end of a document no longer shifts the
+  text above it on the first keystroke.
+- `⇧↵` no longer flashes a backslash at the end of the line while the new
+  line is still empty.
+- Backspace at the start of a line made with `⇧↵`, or Delete at the end of
+  the line before it, removes the whole line break. It used to leave a
+  stray backslash behind.
+
+**App icon**
+
+- Brain has a new pixel floppy disk icon.
+
 ## Version 10
 
 **A4 pages**
